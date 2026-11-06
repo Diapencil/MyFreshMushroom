@@ -13,6 +13,8 @@ namespace MyFreshMushroom
         [SerializeField] private SpawnRecipeData[] spawnRecipes;
         [SerializeField] private bool enableTutorial = true;
         [SerializeField] private string tutorialShelfId = "starting-oyster-shelf";
+        [SerializeField] private MushroomData firstExplorationMushroom;
+        [SerializeField, Min(1)] private int firstExplorationReward = 3;
 
         public MushroomData StartingMushroom => startingMushroom;
         public InventoryService Inventory { get; private set; }
@@ -20,7 +22,10 @@ namespace MyFreshMushroom
         public CultivationService Cultivation { get; private set; }
         public SpawnProductionService SpawnProduction { get; private set; }
         public TutorialManager Tutorial { get; private set; }
+        public ExplorationService Exploration { get; private set; }
+        public IReadOnlyList<MushroomData> Mushrooms { get; private set; }
         public bool IsInitialized => Inventory != null;
+        public bool IsGameplayPaused => Tutorial != null && Tutorial.IsGameplayPaused;
 
         private void Awake()
         {
@@ -30,7 +35,7 @@ namespace MyFreshMushroom
         private void Update()
         {
             // Menus and future exploration screens share this running-session clock.
-            if (IsInitialized) Cultivation.Tick(Time.unscaledDeltaTime);
+            if (IsInitialized && !IsGameplayPaused) Cultivation.Tick(Time.unscaledDeltaTime);
         }
 
         // Views may initialize first, so initialization must not depend on Awake order.
@@ -39,17 +44,21 @@ namespace MyFreshMushroom
             if (IsInitialized)
                 return true;
 
-            if (forest == null || startingMushroom == null || string.IsNullOrWhiteSpace(startingMushroom.Id)
+            if (forest == null || startingMushroom == null || firstExplorationMushroom == null
+                || string.IsNullOrWhiteSpace(firstExplorationMushroom.Id) || firstExplorationReward <= 0
+                || firstExplorationMushroom.Id == startingMushroom.Id || string.IsNullOrWhiteSpace(startingMushroom.Id)
                 || string.IsNullOrWhiteSpace(startingMushroom.DisplayName)
                 || startingMushroomCount < 0 || startingSpawnCount < 0)
             {
-                Debug.LogError("GameManager requires a forest, valid starting mushroom and non-negative starting quantities.", this);
+                Debug.LogError("GameManager requires forest, valid starting/exploration mushrooms and valid quantities.", this);
                 return false;
             }
 
             var mushroomIds = new HashSet<string> { startingMushroom.Id };
+            var mushrooms = new List<MushroomData> { startingMushroom };
             foreach (var recipe in spawnRecipes ?? System.Array.Empty<SpawnRecipeData>())
-                if (recipe != null && recipe.IsValid) mushroomIds.Add(recipe.Mushroom.Id);
+                if (recipe != null && recipe.IsValid && mushroomIds.Add(recipe.Mushroom.Id)) mushrooms.Add(recipe.Mushroom);
+            if (mushroomIds.Add(firstExplorationMushroom.Id)) mushrooms.Add(firstExplorationMushroom);
             var inventory = new InventoryService(mushroomIds);
             if (startingMushroomCount > 0)
                 inventory.TryAdd(startingMushroom.Id, ResourceKind.Mushroom, startingMushroomCount);
@@ -79,11 +88,14 @@ namespace MyFreshMushroom
                     Debug.LogError("Tutorial requires its starting shelf, spawn workbench and starting mushroom recipe.", this);
                     return false;
                 }
-                Tutorial = new TutorialManager(progress, inventory, shelf, workbench, tutorialRecipe);
+                Tutorial = new TutorialManager(progress, shelf, workbench, tutorialRecipe);
             }
             Cultivation = new CultivationService(inventory, facilities, Tutorial);
             SpawnProduction = new SpawnProductionService(inventory, progress, spawnRecipes ?? System.Array.Empty<SpawnRecipeData>(), Tutorial);
             Tutorial?.Bind(Cultivation, SpawnProduction);
+            Exploration = new ExplorationService(inventory, progress, firstExplorationMushroom.Id, firstExplorationReward, Tutorial);
+            Tutorial?.BindExploration(Exploration);
+            Mushrooms = mushrooms.AsReadOnly();
             Progress = progress;
             Inventory = inventory;
             return true;

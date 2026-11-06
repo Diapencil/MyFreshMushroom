@@ -16,6 +16,8 @@ namespace MyFreshMushroom
         private InventoryService inventory;
         private TutorialManager tutorial;
         private readonly KoreanUiFont uiFont = new KoreanUiFont();
+        public RectTransform InoculateButtonTransform => (RectTransform)inoculateButton.transform;
+        public RectTransform WaterButtonTransform => (RectTransform)waterButton.transform;
 
         private void OnEnable()
         {
@@ -109,7 +111,7 @@ namespace MyFreshMushroom
             inoculateButton.interactable = emptyShelf && session.Cultivation.CanInoculate(state);
             if (state == null)
             {
-                statusText.text = "시설 선택\n선반이나 종균 배양대를 눌러 주세요.";
+                statusText.text = "시설 선택\n재배 시설이나 종균 배양대를 눌러 주세요.";
                 return;
             }
             var data = state.Definition;
@@ -122,10 +124,11 @@ namespace MyFreshMushroom
             if (crop.Stage == GrowthStage.Empty)
             {
                 var mushroom = data.SupportedMushroom;
-                string action = !mushroom.HasValidCultivationSettings ? "재배 설정을 확인해 주세요"
+                string action = !session.Progress.IsDiscovered(mushroom.Id) ? "탐험에서 먼저 발견해 주세요"
+                    : !mushroom.HasValidCultivationSettings ? "재배 설정을 확인해 주세요"
                     : !inventory.CanAfford(mushroom.Id, ResourceKind.Spawn, 1) ? "종균이 부족합니다"
                     : !session.Cultivation.CanInoculate(state) ? "튜토리얼 안내를 진행해 주세요" : "종균 1개 필요";
-                statusText.text = $"{data.DisplayName}\n빈 선반 | {action}";
+                statusText.text = $"{data.DisplayName}\n접종 대기 | {action}";
             }
             else if (crop.Stage == GrowthStage.Ready)
                 statusText.text = $"{data.DisplayName}\n수확 가능 | 클릭하여 버섯 {crop.HarvestYield}개 수확";

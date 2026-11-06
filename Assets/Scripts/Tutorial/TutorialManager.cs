@@ -9,32 +9,41 @@ namespace MyFreshMushroom
         FirstSpawnProduction,
         SecondInoculation,
         WaterSecondCrop,
+        WateringComplete,
         SecondHarvest,
         AwaitFirstExploration,
+        FirstExploration,
+        FindFirstMushroom,
         Completed
     }
 
     public sealed class TutorialManager : IGameplayActionRules, IDisposable
     {
         private readonly ProgressState progress;
-        private readonly InventoryService inventory;
         private readonly FacilityState shelf;
         private readonly FacilityState workbench;
         private readonly SpawnRecipeData recipe;
         private CultivationService cultivation;
         private SpawnProductionService production;
+        private ExplorationService exploration;
         private long expectedCycle;
         private int expectedYield;
+        private bool waterMessageShown;
+        private bool harvestMessageShown;
 
         public TutorialStep Step => progress.CurrentTutorialStep;
         public bool RestrictsActions => Step < TutorialStep.AwaitFirstExploration;
+        public bool IsMessageOpen { get; private set; } = true;
+        public bool IsGameplayPaused => IsMessageOpen;
+        public bool CanContinueMessage => IsMessageOpen && (Step == TutorialStep.FirstHarvest
+            && shelf.Cultivation.Stage != GrowthStage.Ready || Step == TutorialStep.WateringComplete
+            || Step >= TutorialStep.AwaitFirstExploration);
         public event Action Changed;
 
-        public TutorialManager(ProgressState progress, InventoryService inventory, FacilityState shelf,
+        public TutorialManager(ProgressState progress, FacilityState shelf,
             FacilityState workbench, SpawnRecipeData recipe)
         {
             this.progress = progress ?? throw new ArgumentNullException(nameof(progress));
-            this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
             this.shelf = shelf ?? throw new ArgumentNullException(nameof(shelf));
             this.workbench = workbench ?? throw new ArgumentNullException(nameof(workbench));
             this.recipe = recipe ?? throw new ArgumentNullException(nameof(recipe));
@@ -49,49 +58,97 @@ namespace MyFreshMushroom
             cultivation.Watered += OnWatered;
             cultivation.Harvested += OnHarvested;
             production.Produced += OnProduced;
-            shelf.Cultivation.Changed += NotifyChanged;
+            shelf.Cultivation.Changed += OnCropChanged;
         }
 
-        private bool NeedsRetrySpawn => Step == TutorialStep.WaterSecondCrop
-            && shelf.Cultivation.Stage == GrowthStage.Empty
-            && inventory.State.GetAmounts(recipe.Mushroom.Id).Spawn == 0;
-
         public FacilityState GuidanceTarget => !RestrictsActions ? null
-            : Step == TutorialStep.FirstSpawnProduction || NeedsRetrySpawn ? workbench : shelf;
+            : Step == TutorialStep.FirstSpawnProduction ? workbench : shelf;
+
+        public void ContinueMessage()
+        {
+            if (!CanContinueMessage) return;
+            if (Step == TutorialStep.WateringComplete)
+            {
+                SetStep(TutorialStep.SecondHarvest);
+                return;
+            }
+            if (Step == TutorialStep.FirstExploration)
+            {
+                SetStep(TutorialStep.FindFirstMushroom);
+                return;
+            }
+            IsMessageOpen = false;
+            NotifyChanged();
+        }
+
+        public bool AllowsEnteringExploration() => !IsMessageOpen && Step >= TutorialStep.AwaitFirstExploration;
+        public bool AllowsCollectingExplorationMushroom() => !IsMessageOpen
+            && (Step == TutorialStep.FindFirstMushroom || Step == TutorialStep.Completed);
+
+        public void BindExploration(ExplorationService exploration)
+        {
+            this.exploration = exploration;
+            exploration.Entered += OnExplorationEntered;
+            exploration.Collected += OnExplorationCollected;
+        }
+
+        private void OnExplorationEntered()
+        {
+            if (Step == TutorialStep.AwaitFirstExploration) SetStep(TutorialStep.FirstExploration);
+        }
+
+        private void OnExplorationCollected(string mushroomId, int quantity)
+        {
+            if (Step == TutorialStep.FindFirstMushroom && mushroomId == exploration.MushroomId
+                && quantity == exploration.RewardQuantity && progress.FirstExplorationCollected
+                && progress.IsDiscovered(mushroomId)) SetStep(TutorialStep.Completed);
+        }
+
+        public double GetGrowthDelta(double requestedSeconds)
+        {
+            if (IsGameplayPaused) return 0;
+            // Stop exactly when watering becomes possible, even after a long frame.
+            if (Step == TutorialStep.WaterSecondCrop && !waterMessageShown
+                && shelf.Cultivation.Stage == GrowthStage.Mycelium)
+                return Math.Min(requestedSeconds, shelf.Cultivation.SecondsUntilWatering);
+            return requestedSeconds;
+        }
 
         public bool AllowsInoculation(FacilityState facility)
         {
+            if (CanContinueMessage) return false;
             return !RestrictsActions || ReferenceEquals(facility, shelf)
-                && (Step == TutorialStep.FirstInoculation || Step == TutorialStep.SecondInoculation
-                    || Step == TutorialStep.WaterSecondCrop);
+                && (Step == TutorialStep.FirstInoculation || Step == TutorialStep.SecondInoculation);
         }
 
         public bool AllowsWatering(FacilityState facility)
         {
+            if (CanContinueMessage) return false;
             return !RestrictsActions || ReferenceEquals(facility, shelf)
                 && Step == TutorialStep.WaterSecondCrop && facility.Cultivation.CycleNumber == expectedCycle;
         }
 
         public bool AllowsHarvest(FacilityState facility)
         {
+            if (CanContinueMessage) return false;
             if (!RestrictsActions) return true;
             if (!ReferenceEquals(facility, shelf) || facility.Cultivation.CycleNumber != expectedCycle) return false;
-            return (Step == TutorialStep.FirstHarvest || Step == TutorialStep.WaterSecondCrop)
+            return Step == TutorialStep.FirstHarvest
                 && !facility.Cultivation.HasBeenWatered
                 || Step == TutorialStep.SecondHarvest && facility.Cultivation.HasBeenWatered;
         }
 
         public bool AllowsProduction(SpawnRecipeData selectedRecipe, int batches)
         {
+            if (CanContinueMessage) return false;
             return !RestrictsActions || ReferenceEquals(recipe, selectedRecipe) && batches == 1
-                && (Step == TutorialStep.FirstSpawnProduction || NeedsRetrySpawn);
+                && Step == TutorialStep.FirstSpawnProduction;
         }
 
         private void OnInoculated(FacilityState facility)
         {
             if (!ReferenceEquals(facility, shelf)) return;
-            if (Step != TutorialStep.FirstInoculation && Step != TutorialStep.SecondInoculation
-                && Step != TutorialStep.WaterSecondCrop) return;
+            if (Step != TutorialStep.FirstInoculation && Step != TutorialStep.SecondInoculation) return;
             expectedCycle = facility.Cultivation.CycleNumber;
             expectedYield = facility.Cultivation.HarvestYield;
             SetStep(Step == TutorialStep.FirstInoculation ? TutorialStep.FirstHarvest : TutorialStep.WaterSecondCrop);
@@ -102,7 +159,7 @@ namespace MyFreshMushroom
             if (Step != TutorialStep.WaterSecondCrop || !ReferenceEquals(facility, shelf)
                 || facility.Cultivation.CycleNumber != expectedCycle) return;
             expectedYield = facility.Cultivation.HarvestYield;
-            SetStep(TutorialStep.SecondHarvest);
+            SetStep(TutorialStep.WateringComplete);
         }
 
         private void OnHarvested(HarvestResult result)
@@ -113,19 +170,37 @@ namespace MyFreshMushroom
                 SetStep(TutorialStep.FirstSpawnProduction);
             else if (Step == TutorialStep.SecondHarvest && result.WasWatered && result.Quantity == expectedYield)
                 SetStep(TutorialStep.AwaitFirstExploration);
-            else NotifyChanged();
         }
 
         private void OnProduced(SpawnRecipeData producedRecipe, int batches)
         {
             if (!ReferenceEquals(producedRecipe, recipe) || batches != 1) return;
             if (Step == TutorialStep.FirstSpawnProduction) SetStep(TutorialStep.SecondInoculation);
-            else NotifyChanged();
         }
 
         private void SetStep(TutorialStep step)
         {
             progress.CurrentTutorialStep = step;
+            waterMessageShown = false;
+            harvestMessageShown = false;
+            IsMessageOpen = step != TutorialStep.WaterSecondCrop && step != TutorialStep.FindFirstMushroom
+                && (step != TutorialStep.SecondHarvest || shelf.Cultivation.Stage == GrowthStage.Ready);
+            NotifyChanged();
+        }
+
+        private void OnCropChanged()
+        {
+            if (Step == TutorialStep.WaterSecondCrop && !waterMessageShown && shelf.Cultivation.CanWater)
+            {
+                waterMessageShown = true;
+                IsMessageOpen = true;
+            }
+            else if ((Step == TutorialStep.FirstHarvest || Step == TutorialStep.SecondHarvest)
+                && !harvestMessageShown && shelf.Cultivation.Stage == GrowthStage.Ready)
+            {
+                harvestMessageShown = true;
+                IsMessageOpen = true;
+            }
             NotifyChanged();
         }
 
@@ -138,27 +213,29 @@ namespace MyFreshMushroom
                 switch (Step)
                 {
                     case TutorialStep.FirstInoculation:
-                        return "재배 안내 1/6 · 첫 접종\n강조된 선반을 선택하고 ‘종균 심기’를 눌러 주세요.";
+                        return "재배 안내 1/7 · 첫 접종\n선반을 선택하고 ‘종균 심기’를 눌러 주세요.";
                     case TutorialStep.FirstHarvest:
                         return shelf.Cultivation.Stage == GrowthStage.Ready
-                            ? $"재배 안내 2/6 · 첫 수확\n선반을 눌러 버섯 {expectedYield}개를 수확해 주세요."
-                            : "재배 안내 2/6 · 첫 성장\n버섯은 시간이 지나면 성장해요. 다 자라면 선반을 눌러 수확해 주세요.";
+                            ? $"재배 안내 2/7 · 첫 수확\n선반을 눌러 버섯 {expectedYield}개를 수확해 주세요."
+                            : "재배 안내 2/7 · 첫 성장\n버섯은 시간이 지나면 성장해요. 다 자라면 선반을 눌러 수확해 주세요.";
                     case TutorialStep.FirstSpawnProduction:
-                        return $"재배 안내 3/6 · 종균 만들기\n배양대에서 {recipe.Mushroom.DisplayName} {recipe.MushroomCost}개로 종균 {recipe.SpawnOutput}개를 1회 만들어 주세요.";
+                        return $"재배 안내 3/7 · 종균 만들기\n배양대에서 {recipe.Mushroom.DisplayName} {recipe.MushroomCost}개로 종균 {recipe.SpawnOutput}개를 1회 만들어 주세요.";
                     case TutorialStep.SecondInoculation:
-                        return "재배 안내 4/6 · 두 번째 접종\n선반을 선택하고 다시 ‘종균 심기’를 눌러 주세요.";
+                        return "재배 안내 4/7 · 두 번째 접종\n선반을 선택하고 다시 ‘종균 심기’를 눌러 주세요.";
                     case TutorialStep.WaterSecondCrop:
-                        if (NeedsRetrySpawn)
-                            return "재배 안내 5/6 · 물 주기 재시도\n종균을 모두 사용했어요. 배양대에서 1회 제작한 뒤 다시 심어 주세요.";
-                        if (shelf.Cultivation.Stage == GrowthStage.Ready)
-                            return "재배 안내 5/6 · 물 주기 재시도\n물 주기 시기를 놓쳤어요. 먼저 수확한 뒤 다시 심어 주세요.";
-                        return "재배 안내 5/6 · 물 주기\n선반의 성장 2~3단계에 ‘물 주기’를 눌러 주세요. 시기를 놓쳐도 다시 시도할 수 있어요.";
+                        return "재배 안내 5/7 · 물 주기\n선반을 선택하고 ‘물 주기’를 눌러 주세요. 물을 주면 수확량이 늘어납니다.";
+                    case TutorialStep.WateringComplete:
+                        return $"재배 안내 6/7 · 물 주기 완료\n물 주기로 예상 수확량이 {expectedYield}개로 늘었어요. ‘계속’을 누르고 버섯이 다 자랄 때까지 기다려 주세요.";
                     case TutorialStep.SecondHarvest:
-                        return $"재배 안내 6/6 · 보너스 수확\n물 주기를 완료했어요. 다 자란 선반을 눌러 버섯 {expectedYield}개를 수확해 주세요.";
+                        return $"재배 안내 7/7 · 보너스 수확\n버섯이 다 자랐어요. 선반을 눌러 버섯 {expectedYield}개를 수확해 주세요.";
                     case TutorialStep.AwaitFirstExploration:
-                        return "재배 안내 완료 · 첫 탐험 대기\n탐험 기능은 다음 개발 단계에서 연결합니다. 그동안 재배와 종균 제작을 자유롭게 계속할 수 있어요.";
+                        return "재배 안내 완료 · 첫 탐험\n이제 새로운 버섯을 찾아볼까요? ‘계속’을 누른 뒤 오른쪽 위 ‘탐험하기’를 눌러 주세요.";
+                    case TutorialStep.FirstExploration:
+                        return "첫 탐험 · 숲 둘러보기\n마우스를 누른 채 끌면 화면이 이동하고, 휠을 굴리면 확대·축소됩니다. 통나무 옆 버섯을 찾아 한 번 눌러 주세요.";
+                    case TutorialStep.FindFirstMushroom:
+                        return "첫 탐험 · 버섯 발견\n통나무 주변을 살펴보고 보이는 버섯을 눌러 주세요.";
                     default:
-                        return "튜토리얼 완료";
+                        return "튜토리얼 완료 · 표고버섯 발견!\n표고버섯을 얻었어요. ‘계속’을 누른 뒤 숲으로 돌아가 재배를 이어가세요.";
                 }
             }
         }
@@ -172,9 +249,15 @@ namespace MyFreshMushroom
                 cultivation.Harvested -= OnHarvested;
             }
             if (production != null) production.Produced -= OnProduced;
-            shelf.Cultivation.Changed -= NotifyChanged;
+            if (exploration != null)
+            {
+                exploration.Entered -= OnExplorationEntered;
+                exploration.Collected -= OnExplorationCollected;
+            }
+            shelf.Cultivation.Changed -= OnCropChanged;
             cultivation = null;
             production = null;
+            exploration = null;
         }
     }
 }

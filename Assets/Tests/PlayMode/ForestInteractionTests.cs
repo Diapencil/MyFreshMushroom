@@ -21,9 +21,9 @@ namespace MyFreshMushroom.Tests
             var camera = Camera.main;
             Assert.That(forest.Grid.Size, Is.EqualTo(16));
             Assert.That(forest.TileCount, Is.EqualTo(256));
-            Assert.That(forest.Facilities.Count, Is.EqualTo(2));
+            Assert.That(forest.Facilities.Count, Is.EqualTo(3));
             forest.Initialize();
-            Assert.That(forest.Facilities.Count, Is.EqualTo(2));
+            Assert.That(forest.Facilities.Count, Is.EqualTo(3));
             Assert.That(forest.TileCount, Is.EqualTo(256));
             var text = panel.GetComponentInChildren<Text>();
             Assert.That(text.font != null && text.font.HasCharacter('M'), Is.True);

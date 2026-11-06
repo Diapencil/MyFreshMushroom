@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Text;
 
 namespace MyFreshMushroom
 {
@@ -26,21 +27,32 @@ namespace MyFreshMushroom
 
             inventory = session.Inventory;
             inventory.Changed += Refresh;
+            session.Progress.DiscoveryChanged += Refresh;
             Refresh();
         }
 
         private void OnDisable()
         {
             if (inventory != null)
+            {
                 inventory.Changed -= Refresh;
+                session.Progress.DiscoveryChanged -= Refresh;
+            }
             inventory = null;
         }
 
         private void Refresh()
         {
-            var mushroom = session.StartingMushroom;
-            var amounts = inventory.State.GetAmounts(mushroom.Id);
-            quantitiesText.text = $"{mushroom.DisplayName}\n버섯: {amounts.Mushrooms}개    종균: {amounts.Spawn}개";
+            var text = new StringBuilder();
+            foreach (var mushroom in session.Mushrooms)
+            {
+                if (!session.Progress.IsDiscovered(mushroom.Id)) continue;
+                if (text.Length > 0) text.AppendLine();
+                var amounts = inventory.State.GetAmounts(mushroom.Id);
+                text.Append(mushroom.DisplayName).Append('\n').Append("버섯: ").Append(amounts.Mushrooms)
+                    .Append("개    종균: ").Append(amounts.Spawn).Append('개');
+            }
+            quantitiesText.text = text.ToString();
         }
 
         private void OnDestroy() => uiFont.Dispose();

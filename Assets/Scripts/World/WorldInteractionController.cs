@@ -79,6 +79,10 @@ namespace MyFreshMushroom
                 if (candidate == null || view.SortingOrder > candidate.SortingOrder)
                     candidate = view;
             }
+            var tutorial = session != null ? session.Tutorial : null;
+            if (tutorial != null && tutorial.IsMessageOpen
+                && !ReferenceEquals(candidate != null ? candidate.State : null, tutorial.GuidanceTarget))
+                return false;
             forest.Selection.Select(candidate != null ? candidate.State : null);
             return true;
         }

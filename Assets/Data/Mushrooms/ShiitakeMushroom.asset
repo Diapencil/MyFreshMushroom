@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0199d1180b14ce48abc3242b06fb521, type: 3}
+  m_Name: ShiitakeMushroom
+  m_EditorClassIdentifier:
+  id: shiitake
+  displayName: 표고버섯
+  icon: {fileID: 21300000, guid: 396a8b84d6f246948eb3b26b6583378f, type: 3}
+  growthDurationSeconds: 9
+  baseHarvestYield: 3
+  wateringYieldMultiplier: 1.5
+  growthStageWeights: {x: 1, y: 1, z: 1}
+  growthStageSprites:
+  - {fileID: 21300000, guid: ff6a876e3ec34f8ab419250e0e6f342a, type: 3}
+  - {fileID: 21300000, guid: 9f419cf8b8034ed8bf9bed6d91968612, type: 3}
+  - {fileID: 21300000, guid: 04026f35620e4e4ea1876145e72bdf2f, type: 3}
+  - {fileID: 21300000, guid: df69eb02d5bc43fd926f789d75317e50, type: 3}

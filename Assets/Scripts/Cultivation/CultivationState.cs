@@ -14,6 +14,8 @@ namespace MyFreshMushroom
         public long CycleNumber { get; private set; }
         public double ElapsedSeconds { get; private set; }
         public double RemainingSeconds => Math.Max(0, duration - ElapsedSeconds);
+        public double SecondsUntilWatering => Stage == GrowthStage.Mycelium
+            ? Math.Max(0, firstStageEnd - ElapsedSeconds) : 0;
         public int HarvestYield { get; private set; }
         public bool HasBeenWatered { get; private set; }
         public bool CanWater => !HasBeenWatered && (Stage == GrowthStage.Pinning || Stage == GrowthStage.Growing);

@@ -29,6 +29,7 @@ namespace MyFreshMushroom
         private FacilitySelection selection;
         private SpawnProductionService production;
         private TutorialManager tutorial;
+        public RectTransform ProduceButtonTransform => (RectTransform)produceButton.transform;
 
         private void OnEnable()
         {

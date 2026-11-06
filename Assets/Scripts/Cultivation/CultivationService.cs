@@ -111,6 +111,8 @@ namespace MyFreshMushroom
         public void Tick(double seconds)
         {
             if (processingAction || !double.IsFinite(seconds) || seconds <= 0) return;
+            seconds = actionRules != null ? actionRules.GetGrowthDelta(seconds) : seconds;
+            if (seconds <= 0) return;
             foreach (var facility in facilities)
                 if (facility != null) facility.Cultivation.Advance(seconds);
         }

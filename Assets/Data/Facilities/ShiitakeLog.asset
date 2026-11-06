@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d3fab5aad4dffc4387654032ece34f5, type: 3}
+  m_Name: ShiitakeLog
+  m_EditorClassIdentifier: MyFreshMushroom.Runtime::MyFreshMushroom.FacilityData
+  id: shiitake-log
+  displayName: 표고 통나무 재배대
+  kind: 0
+  footprint: {x: 2, y: 1}
+  supportedMushroom: {fileID: 11400000, guid: fe429714500746a7bdb3a66f1537d784, type: 2}
+  sprite: {fileID: 21300000, guid: 275dd8dbdb87496eb4b224d7c707ac18, type: 3}
