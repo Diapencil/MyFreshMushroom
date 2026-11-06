@@ -1,0 +1,5 @@
+{
+    "name": "MyFreshMushroom.PlayModeTests",
+    "references": ["MyFreshMushroom.Runtime", "UnityEngine.UI"],
+    "optionalUnityReferences": ["TestAssemblies"]
+}

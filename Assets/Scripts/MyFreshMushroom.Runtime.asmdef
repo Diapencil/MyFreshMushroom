@@ -1,0 +1,5 @@
+{
+    "name": "MyFreshMushroom.Runtime",
+    "rootNamespace": "MyFreshMushroom",
+    "references": ["UnityEngine.UI", "Unity.InputSystem"]
+}

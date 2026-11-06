@@ -1,0 +1,6 @@
+{
+    "name": "MyFreshMushroom.EditModeTests",
+    "references": ["MyFreshMushroom.Runtime"],
+    "includePlatforms": ["Editor"],
+    "optionalUnityReferences": ["TestAssemblies"]
+}
