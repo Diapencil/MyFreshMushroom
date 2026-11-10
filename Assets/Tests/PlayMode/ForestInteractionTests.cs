@@ -1,7 +1,9 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -10,6 +12,52 @@ namespace MyFreshMushroom.Tests
 {
     public sealed class ForestInteractionTests
     {
+        [UnityTest]
+        public IEnumerator TutorialHarvestAndProductionUseTheActionMenuAndModal()
+        {
+            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return null;
+            var session = Object.FindFirstObjectByType<GameManager>();
+            var forest = Object.FindFirstObjectByType<ForestGridView>();
+            var input = Object.FindFirstObjectByType<WorldInteractionController>();
+            var panel = Object.FindFirstObjectByType<SpawnProductionPanel>();
+            var shelf = session.Tutorial.GuidanceTarget;
+            forest.Selection.Select(shelf);
+
+            GameObject.Find("Inoculate Button").GetComponent<Button>().onClick.Invoke();
+            session.Tutorial.ContinueMessage();
+            session.Cultivation.Tick(100);
+            Assert.That(shelf.Cultivation.Stage, Is.EqualTo(GrowthStage.Ready));
+            GameObject.Find("Harvest").GetComponent<Button>().onClick.Invoke();
+            Assert.That(session.Tutorial.Step, Is.EqualTo(TutorialStep.FirstSpawnProduction));
+            forest.Selection.Select(session.Tutorial.GuidanceTarget);
+            Assert.That(panel.Content.gameObject.activeInHierarchy, Is.False);
+
+            var open = GameObject.Find("Open Production").GetComponent<Button>();
+            open.onClick.Invoke();
+            yield return null;
+            Assert.That(panel.Content.parent.name, Is.EqualTo("Popup Window"));
+            Assert.That(panel.Content.gameObject.activeInHierarchy, Is.True);
+            Assert.That(open.IsInteractable(), Is.False);
+
+            var backdrop = GameObject.Find("Popup Backdrop").GetComponent<Image>();
+            Assert.That(backdrop.raycastTarget, Is.True);
+            var bench = forest.Facilities.Single(view => view.State == forest.Selection.Selected);
+            Vector2 pointer = Camera.main.WorldToScreenPoint(bench.GetComponent<BoxCollider2D>().bounds.center);
+            var hits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position = pointer }, hits);
+            Assert.That(hits.Any(hit => hit.gameObject == backdrop.gameObject), Is.True);
+            Assert.That(input.TrySelectAtScreenPosition(pointer), Is.False);
+
+            GameObject.Find("Close Popup").GetComponent<Button>().onClick.Invoke();
+            Assert.That(panel.Content.gameObject.activeInHierarchy, Is.False);
+            Assert.That(open.IsInteractable(), Is.True);
+            open.onClick.Invoke();
+            GameObject.Find("Produce").GetComponent<Button>().onClick.Invoke();
+            Assert.That(session.Tutorial.Step, Is.EqualTo(TutorialStep.SecondInoculation));
+            Assert.That(panel.Content.gameObject.activeInHierarchy, Is.False);
+        }
+
         [UnityTest]
         public IEnumerator ForestHasExpectedLayoutAndBothFacilitiesCanBeSelected()
         {

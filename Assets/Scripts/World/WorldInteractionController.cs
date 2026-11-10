@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -9,61 +10,98 @@ namespace MyFreshMushroom
     {
         [SerializeField] private ForestGridView forest;
         [SerializeField] private Camera worldCamera;
+        [SerializeField] private ForestCamera forestCamera;
         [SerializeField] private EventSystem eventSystem;
         [SerializeField] private GameManager session;
-        private InputAction click;
+        private bool ready;
+        private bool pressed;
+        private bool dragged;
+        private Vector2 pressPosition;
+        private Vector2 previousPosition;
         private readonly List<RaycastResult> uiHits = new List<RaycastResult>();
+        public ForestAreaState SelectedArea { get; private set; }
+        public event Action AreaSelectionChanged;
 
         private void OnEnable()
         {
-            if (forest == null || worldCamera == null || eventSystem == null || session == null)
+            if (forest == null || worldCamera == null || forestCamera == null || eventSystem == null || session == null)
             {
                 Debug.LogError("WorldInteractionController requires forest, camera, EventSystem and GameManager references.", this);
                 return;
             }
             forest.Initialize();
             if (!session.Initialize()) return;
-            click = new InputAction("Select facility", InputActionType.Button, "<Mouse>/leftButton");
-            click.performed += OnClick;
-            click.Enable();
+            ready = true;
+            forest.Selection.Changed += OnFacilitySelected;
+            if (session.Tutorial != null) session.Tutorial.Changed += OnTutorialChanged;
         }
 
         private void OnDisable()
         {
-            if (click == null) return;
-            click.performed -= OnClick;
-            click.Dispose();
-            click = null;
+            if (!ready) return;
+            forest.Selection.Changed -= OnFacilitySelected;
+            if (session.Tutorial != null) session.Tutorial.Changed -= OnTutorialChanged;
+            ready = pressed = dragged = false;
+            SelectArea(null);
         }
 
-        private void OnClick(InputAction.CallbackContext context)
+        private void Update()
         {
-            if (Mouse.current != null)
-                TryInteractAtScreenPosition(Mouse.current.position.ReadValue());
+            var mouse = Mouse.current;
+            if (!ready || mouse == null) { pressed = dragged = false; return; }
+            Vector2 pointer = mouse.position.ReadValue();
+            bool canMoveCamera = !session.IsGameplayPaused;
+            if (mouse.leftButton.wasPressedThisFrame)
+            {
+                pressed = CanPointAtWorld(pointer);
+                dragged = false;
+                pressPosition = previousPosition = pointer;
+            }
+
+            float scroll = mouse.scroll.ReadValue().y;
+            if (scroll != 0 && canMoveCamera && CanPointAtWorld(pointer)) forestCamera.Zoom(pointer, scroll);
+
+            if (!pressed) return;
+            if (!dragged && (pointer - pressPosition).sqrMagnitude > 25)
+            {
+                dragged = true;
+                previousPosition = pressPosition;
+            }
+            if (dragged && canMoveCamera) forestCamera.Pan(previousPosition, pointer);
+            previousPosition = pointer;
+            if (mouse.leftButton.wasReleasedThisFrame)
+            {
+                if (!dragged) TrySelectAtScreenPosition(pointer);
+                pressed = dragged = false;
+            }
         }
 
-        public bool TryInteractAtScreenPosition(Vector2 position)
+        private void OnApplicationFocus(bool hasFocus)
         {
-            if (!TrySelectAtScreenPosition(position) || session == null || !session.IsInitialized)
-                return false;
-            var selected = forest.Selection.Selected;
-            if (selected == null || selected.Definition.Kind != FacilityKind.CultivationShelf) return true;
-            if (selected.Cultivation.Stage == GrowthStage.Ready)
-                session.Cultivation.TryHarvest(selected);
-            return true;
+            if (!hasFocus) pressed = dragged = false;
+        }
+
+        private void OnTutorialChanged()
+        {
+            if (session.Tutorial.IsMessageOpen && session.Tutorial.GuidanceTarget != null)
+                forestCamera.ShowWholeMap();
+        }
+
+        private void OnFacilitySelected(FacilityState facility)
+        {
+            if (facility != null) SelectArea(null);
+        }
+
+        private void SelectArea(ForestAreaState area)
+        {
+            if (ReferenceEquals(SelectedArea, area)) return;
+            SelectedArea = area;
+            AreaSelectionChanged?.Invoke();
         }
 
         public bool TrySelectAtScreenPosition(Vector2 position)
         {
-            if (!isActiveAndEnabled || forest == null || worldCamera == null || eventSystem == null)
-                return false;
-            if (!float.IsFinite(position.x) || !float.IsFinite(position.y) || !worldCamera.pixelRect.Contains(position))
-                return false;
-            // Raycast at this click's position, even before the UI module updates its pointer cache.
-            uiHits.Clear();
-            eventSystem.RaycastAll(new PointerEventData(eventSystem) { position = position }, uiHits);
-            if (uiHits.Count > 0)
-                return false;
+            if (!ready || !isActiveAndEnabled || !CanPointAtWorld(position)) return false;
 
             var plane = new Plane(Vector3.forward, forest.transform.position);
             Ray ray = worldCamera.ScreenPointToRay(position);
@@ -83,8 +121,25 @@ namespace MyFreshMushroom
             if (tutorial != null && tutorial.IsMessageOpen
                 && !ReferenceEquals(candidate != null ? candidate.State : null, tutorial.GuidanceTarget))
                 return false;
+            ForestAreaState selectedArea = null;
+            if (candidate == null && !session.IsGameplayPaused)
+            {
+                var definition = forest.FindAreaAt(worldPosition);
+                if (definition != null) session.ForestAreas.TryGetValue(definition.Id, out selectedArea);
+            }
             forest.Selection.Select(candidate != null ? candidate.State : null);
+            SelectArea(selectedArea);
             return true;
+        }
+
+        private bool CanPointAtWorld(Vector2 position)
+        {
+            if (!float.IsFinite(position.x) || !float.IsFinite(position.y) || !worldCamera.pixelRect.Contains(position))
+                return false;
+            // Raycast at this pointer position, even before the UI module updates its cache.
+            uiHits.Clear();
+            eventSystem.RaycastAll(new PointerEventData(eventSystem) { position = position }, uiHits);
+            return uiHits.Count == 0;
         }
     }
 }

@@ -29,7 +29,8 @@ namespace MyFreshMushroom
         private FacilitySelection selection;
         private SpawnProductionService production;
         private TutorialManager tutorial;
-        public RectTransform ProduceButtonTransform => (RectTransform)produceButton.transform;
+        public RectTransform Content => (RectTransform)content.transform;
+        public float PopupHeight => 340 + 44 * Mathf.Max(0, recipeButtons.Count - 1);
 
         private void OnEnable()
         {
@@ -48,7 +49,7 @@ namespace MyFreshMushroom
             tutorial = session.Tutorial;
             if (tutorial != null) tutorial.Changed += Refresh;
             foreach (var label in content.GetComponentsInChildren<Text>(true)) uiFont.Apply(label);
-            titleText.text = "종균 배양대";
+            titleText.enabled = false;
             decreaseButton.onClick.AddListener(Decrease);
             increaseButton.onClick.AddListener(Increase);
             produceButton.onClick.AddListener(Produce);
@@ -77,7 +78,7 @@ namespace MyFreshMushroom
 
         private void OnSelectionChanged(FacilityState facility)
         {
-            content.SetActive(WorkbenchSelected);
+            content.SetActive(false);
             if (!WorkbenchSelected) return;
             batches = 1;
             feedback = "";
@@ -110,8 +111,6 @@ namespace MyFreshMushroom
                 visibleRecipes.Add(recipe);
                 if (selectedRecipe == null) selectedRecipe = recipe;
             }
-            float extraHeight = 44 * Mathf.Max(0, recipeButtons.Count - 1);
-            ((RectTransform)transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 340 + extraHeight);
             recipeList.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 44 * Mathf.Max(1, recipeButtons.Count));
         }
 

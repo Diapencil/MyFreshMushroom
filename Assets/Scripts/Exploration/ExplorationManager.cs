@@ -42,6 +42,10 @@ namespace MyFreshMushroom
         private Vector2 pressPosition;
         private Vector2 previousPosition;
 
+        public Button EnterButton => enterButton;
+        public Button ReturnButton => returnButton;
+        public string Status => statusText.text;
+
         private void OnEnable()
         {
             if (session == null || forest == null || worldInput == null || facilityPanel == null || productionPanel == null
@@ -58,8 +62,11 @@ namespace MyFreshMushroom
             uiFont.Apply(statusText);
             foreach (var button in new[] { enterButton, returnButton })
                 uiFont.Apply(button.GetComponentInChildren<Text>(true));
+            var returnLabel = returnButton.GetComponentInChildren<Text>(true);
+            if (returnLabel != null) returnLabel.text = "돌아가기";
             enterButton.onClick.AddListener(Enter);
             returnButton.onClick.AddListener(Return);
+            explorationInfo.SetActive(false);
             exploration.Changed += Refresh;
             if (session.Tutorial != null) session.Tutorial.Changed += Refresh;
             Refresh();
@@ -100,9 +107,9 @@ namespace MyFreshMushroom
             return renderer;
         }
 
-        private void Enter()
+        public void Enter()
         {
-            if (!exploration.TryEnter()) return;
+            if (exploration == null || !exploration.TryEnter()) return;
             savedPosition = worldCamera.transform.position;
             savedSize = worldCamera.orthographicSize;
             savedBackground = worldCamera.backgroundColor;
@@ -139,11 +146,8 @@ namespace MyFreshMushroom
         private void Refresh()
         {
             bool active = exploration.IsExploring;
-            enterButton.gameObject.SetActive(!active);
             enterButton.interactable = exploration.CanEnter;
-            returnButton.gameObject.SetActive(active);
             returnButton.interactable = !session.IsGameplayPaused;
-            explorationInfo.SetActive(active);
             mushroom.gameObject.SetActive(!exploration.IsCollected);
             statusText.text = exploration.IsCollected
                 ? $"표고버섯 {exploration.RewardQuantity}개를 발견했어요!\n숲으로 돌아가 재배를 이어가세요."

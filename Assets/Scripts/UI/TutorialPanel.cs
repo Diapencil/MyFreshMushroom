@@ -15,7 +15,7 @@ namespace MyFreshMushroom
         [SerializeField] private RectTransform dimBottom;
         [SerializeField] private Button continueButton;
         [SerializeField] private FacilityPanel facilityPanel;
-        [SerializeField] private SpawnProductionPanel productionPanel;
+        [SerializeField] private GameplayActionMenu actionMenu;
         [SerializeField] private Camera worldCamera;
         [SerializeField, Min(0)] private float spotlightPadding = 12;
         private TutorialManager tutorial;
@@ -27,7 +27,7 @@ namespace MyFreshMushroom
         {
             if (session == null || forest == null || guidanceText == null || overlayContent == null
                 || dimLeft == null || dimRight == null || dimTop == null || dimBottom == null
-                || continueButton == null || facilityPanel == null || productionPanel == null || worldCamera == null)
+                || continueButton == null || facilityPanel == null || actionMenu == null || worldCamera == null)
             {
                 Debug.LogError("TutorialPanel requires its session, forest, spotlight, message and action references.", this);
                 return;
@@ -73,7 +73,10 @@ namespace MyFreshMushroom
 
         private void LateUpdate()
         {
-            if (tutorial != null && tutorial.IsMessageOpen) RefreshSpotlight();
+            if (tutorial == null || !tutorial.IsMessageOpen) return;
+            if (transform.GetSiblingIndex() != transform.parent.childCount - 1)
+                transform.SetAsLastSibling();
+            RefreshSpotlight();
         }
 
         private void RefreshSpotlight()
@@ -87,8 +90,10 @@ namespace MyFreshMushroom
                     button = facilityPanel.InoculateButtonTransform;
                 else if (tutorial.Step == TutorialStep.WaterSecondCrop)
                     button = facilityPanel.WaterButtonTransform;
+                else if (tutorial.Step == TutorialStep.FirstHarvest || tutorial.Step == TutorialStep.SecondHarvest)
+                    button = actionMenu.HarvestTarget;
                 else if (tutorial.Step == TutorialStep.FirstSpawnProduction)
-                    button = productionPanel.ProduceButtonTransform;
+                    button = actionMenu.ProductionTarget;
             }
 
             bool found = false;

@@ -14,11 +14,21 @@ namespace MyFreshMushroom
             public Vector2Int origin;
         }
 
+        [Serializable]
+        private sealed class AreaPlacement
+        {
+            public ForestAreaData definition;
+            public Vector2 centre;
+            public Vector2 size;
+            public Color color;
+        }
+
         [SerializeField, Range(1, 128)] private int size = 16;
         [SerializeField] private Vector2 tileSize = new Vector2(1, 0.5f);
         [SerializeField] private Sprite groundSprite;
         [SerializeField] private FacilityView facilityPrefab;
         [SerializeField] private InitialFacility[] initialFacilities;
+        [SerializeField] private AreaPlacement[] areas = Array.Empty<AreaPlacement>();
         [SerializeField] private Color groundColor = new Color(0.29f, 0.42f, 0.27f);
         [SerializeField] private Color alternateGroundColor = new Color(0.32f, 0.46f, 0.30f);
 
@@ -27,6 +37,7 @@ namespace MyFreshMushroom
         public ForestGrid Grid { get; private set; }
         public FacilitySelection Selection { get; private set; }
         public int TileCount { get; private set; }
+        public Bounds MapBounds { get; private set; }
 
         private void Awake() => Initialize();
 
@@ -57,6 +68,7 @@ namespace MyFreshMushroom
             }
 
             Grid = grid;
+            MapBounds = new Bounds(transform.position, tileSize * size);
             var ground = new GameObject("Ground").transform;
             ground.SetParent(transform, false);
             for (int x = 0; x < size; x++)
@@ -73,6 +85,22 @@ namespace MyFreshMushroom
                     tileSize.y / groundSprite.bounds.size.y, 1) * 0.97f;
                 TileCount++;
             }
+            foreach (var area in areas)
+            {
+                if (area.definition == null || area.size.x <= 0 || area.size.y <= 0) continue;
+                var marker = new GameObject(area.definition.DisplayName, typeof(SpriteRenderer));
+                marker.transform.SetParent(ground, false);
+                marker.transform.localPosition = area.centre;
+                marker.transform.localScale = new Vector3(area.size.x / groundSprite.bounds.size.x,
+                    area.size.y / groundSprite.bounds.size.y, 1);
+                var renderer = marker.GetComponent<SpriteRenderer>();
+                renderer.sprite = groundSprite;
+                renderer.color = area.color;
+                renderer.sortingOrder = -9999;
+                var bounds = MapBounds;
+                bounds.Encapsulate(renderer.bounds);
+                MapBounds = bounds;
+            }
             foreach (var state in states)
             {
                 var view = Instantiate(facilityPrefab, transform);
@@ -81,6 +109,19 @@ namespace MyFreshMushroom
             }
             Selection = new FacilitySelection(states);
             Selection.Changed += RefreshSelection;
+        }
+
+        public ForestAreaData FindAreaAt(Vector2 worldPosition)
+        {
+            Vector2 local = transform.InverseTransformPoint(worldPosition);
+            foreach (var area in areas)
+            {
+                if (area.definition == null || area.size.x <= 0 || area.size.y <= 0) continue;
+                Vector2 offset = local - area.centre;
+                if (Mathf.Abs(offset.x) / area.size.x + Mathf.Abs(offset.y) / area.size.y <= 0.5f)
+                    return area.definition;
+            }
+            return null;
         }
 
         private void RefreshSelection(FacilityState selected)

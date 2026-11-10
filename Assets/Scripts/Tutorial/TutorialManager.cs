@@ -216,10 +216,10 @@ namespace MyFreshMushroom
                         return "재배 안내 1/7 · 첫 접종\n선반을 선택하고 ‘종균 심기’를 눌러 주세요.";
                     case TutorialStep.FirstHarvest:
                         return shelf.Cultivation.Stage == GrowthStage.Ready
-                            ? $"재배 안내 2/7 · 첫 수확\n선반을 눌러 버섯 {expectedYield}개를 수확해 주세요."
-                            : "재배 안내 2/7 · 첫 성장\n버섯은 시간이 지나면 성장해요. 다 자라면 선반을 눌러 수확해 주세요.";
+                            ? $"재배 안내 2/7 · 첫 수확\n선반을 선택하고 ‘수확’을 눌러 버섯 {expectedYield}개를 얻어 주세요."
+                            : "재배 안내 2/7 · 첫 성장\n버섯이 다 자라면 선반을 선택하고 ‘수확’을 눌러 주세요.";
                     case TutorialStep.FirstSpawnProduction:
-                        return $"재배 안내 3/7 · 종균 만들기\n배양대에서 {recipe.Mushroom.DisplayName} {recipe.MushroomCost}개로 종균 {recipe.SpawnOutput}개를 1회 만들어 주세요.";
+                        return $"재배 안내 3/7 · 종균 만들기\n배양대를 선택하고 ‘종균 배양’을 열어 {recipe.Mushroom.DisplayName} {recipe.MushroomCost}개로 종균 {recipe.SpawnOutput}개를 만들어 주세요.";
                     case TutorialStep.SecondInoculation:
                         return "재배 안내 4/7 · 두 번째 접종\n선반을 선택하고 다시 ‘종균 심기’를 눌러 주세요.";
                     case TutorialStep.WaterSecondCrop:
@@ -227,9 +227,9 @@ namespace MyFreshMushroom
                     case TutorialStep.WateringComplete:
                         return $"재배 안내 6/7 · 물 주기 완료\n물 주기로 예상 수확량이 {expectedYield}개로 늘었어요. ‘계속’을 누르고 버섯이 다 자랄 때까지 기다려 주세요.";
                     case TutorialStep.SecondHarvest:
-                        return $"재배 안내 7/7 · 보너스 수확\n버섯이 다 자랐어요. 선반을 눌러 버섯 {expectedYield}개를 수확해 주세요.";
+                        return $"재배 안내 7/7 · 보너스 수확\n선반을 선택하고 ‘수확’을 눌러 버섯 {expectedYield}개를 얻어 주세요.";
                     case TutorialStep.AwaitFirstExploration:
-                        return "재배 안내 완료 · 첫 탐험\n이제 새로운 버섯을 찾아볼까요? ‘계속’을 누른 뒤 오른쪽 위 ‘탐험하기’를 눌러 주세요.";
+                        return "재배 안내 완료 · 첫 탐험\n‘계속’을 누른 뒤 오른쪽 아래 ‘탐험하기’를 눌러 주세요.";
                     case TutorialStep.FirstExploration:
                         return "첫 탐험 · 숲 둘러보기\n마우스를 누른 채 끌면 화면이 이동하고, 휠을 굴리면 확대·축소됩니다. 통나무 옆 버섯을 찾아 한 번 눌러 주세요.";
                     case TutorialStep.FindFirstMushroom:

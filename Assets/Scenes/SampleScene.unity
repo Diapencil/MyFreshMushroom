@@ -174,6 +174,10 @@ MonoBehaviour:
   tutorialShelfId: starting-oyster-shelf
   firstExplorationMushroom: {fileID: 11400000, guid: fe429714500746a7bdb3a66f1537d784, type: 2}
   firstExplorationReward: 3
+  forestAreas:
+  - {fileID: 11400000, guid: 1a1c42340b2ff8ef581a322000000000, type: 2}
+  - {fileID: 11400000, guid: 1a1c42340b28c3da76f7b83000000000, type: 2}
+  additionalMushrooms: []
 --- !u!1 &1000200
 GameObject:
   m_ObjectHideFlags: 0
@@ -2246,7 +2250,7 @@ MonoBehaviour:
   dimBottom: {fileID: 8000401}
   continueButton: {fileID: 8001004}
   facilityPanel: {fileID: 1832879001}
-  productionPanel: {fileID: 6000002}
+  actionMenu: {fileID: 1395975992}
   worldCamera: {fileID: 519420031}
   spotlightPadding: 12
 --- !u!1 &7000100
@@ -3966,6 +3970,15 @@ MonoBehaviour:
   - instanceId: starting-shiitake-log
     definition: {fileID: 11400000, guid: 3e3fed2b387d4dd9b0eae87954a85e86, type: 2}
     origin: {x: 11, y: 6}
+  areas:
+  - definition: {fileID: 11400000, guid: 1a1c42340b2ff8ef581a322000000000, type: 2}
+    centre: {x: 10, y: 0}
+    size: {x: 4, y: 2}
+    color: {r: 0.48, g: 0.66, b: 0.36, a: 1}
+  - definition: {fileID: 11400000, guid: 1a1c42340b28c3da76f7b83000000000, type: 2}
+    centre: {x: -7.5, y: 2}
+    size: {x: 4, y: 2}
+    color: {r: 0.53, g: 0.41, b: 0.28, a: 1}
   groundColor: {r: 0.29, g: 0.42, b: 0.27, a: 1}
   alternateGroundColor: {r: 0.32, g: 0.46, b: 0.3, a: 1}
 --- !u!4 &1208591389
@@ -3993,6 +4006,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1395975991}
   - component: {fileID: 1395975990}
+  - component: {fileID: 1395975992}
   m_Layer: 0
   m_Name: World Input
   m_TagString: Untagged
@@ -4014,8 +4028,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: MyFreshMushroom.Runtime::MyFreshMushroom.WorldInteractionController
   forest: {fileID: 1208591388}
   worldCamera: {fileID: 519420031}
+  forestCamera: {fileID: 519420033}
   eventSystem: {fileID: 546483679}
   session: {fileID: 1000102}
+--- !u!114 &1395975992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1395975989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b020497c0564f04912bebd639739a16, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: MyFreshMushroom.Runtime::MyFreshMushroom.GameplayActionMenu
+  worldInput: {fileID: 1395975990}
+  session: {fileID: 1000102}
+  canvas: {fileID: 1000201}
+  exploration: {fileID: 9000002}
+  smallForestPath: {fileID: 11400000, guid: 1a1c42340b2ff8ef581a322000000000, type: 2}
+  forest: {fileID: 1208591388}
+  facilityPanel: {fileID: 1832879001}
+  productionPanel: {fileID: 6000002}
 --- !u!4 &1395975991
 Transform:
   m_ObjectHideFlags: 0

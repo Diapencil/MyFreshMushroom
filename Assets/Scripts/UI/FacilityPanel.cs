@@ -18,6 +18,8 @@ namespace MyFreshMushroom
         private readonly KoreanUiFont uiFont = new KoreanUiFont();
         public RectTransform InoculateButtonTransform => (RectTransform)inoculateButton.transform;
         public RectTransform WaterButtonTransform => (RectTransform)waterButton.transform;
+        public string Status => statusText.text;
+        public event Action StatusChanged;
 
         private void OnEnable()
         {
@@ -29,6 +31,8 @@ namespace MyFreshMushroom
             forest.Initialize();
             if (!session.Initialize()) return;
             inventory = session.Inventory;
+            if (TryGetComponent<Image>(out var background)) background.enabled = false;
+            statusText.enabled = false;
             tutorial = session.Tutorial;
             if (tutorial != null) tutorial.Changed += RefreshCurrent;
             inoculateButton.onClick.AddListener(InoculateSelected);
@@ -109,17 +113,17 @@ namespace MyFreshMushroom
                 && state.Cultivation.Stage == GrowthStage.Empty;
             inoculateButton.gameObject.SetActive(emptyShelf);
             inoculateButton.interactable = emptyShelf && session.Cultivation.CanInoculate(state);
+            statusText.text = Describe(state);
+            StatusChanged?.Invoke();
+        }
+
+        private string Describe(FacilityState state)
+        {
             if (state == null)
-            {
-                statusText.text = "시설 선택\n재배 시설이나 종균 배양대를 눌러 주세요.";
-                return;
-            }
+                return "시설 선택\n재배 시설이나 종균 배양대를 눌러 주세요.";
             var data = state.Definition;
             if (data.Kind == FacilityKind.SpawnWorkbench)
-            {
-                statusText.text = $"{data.DisplayName}\n공용 시설";
-                return;
-            }
+                return $"{data.DisplayName}\n공용 시설";
             var crop = state.Cultivation;
             if (crop.Stage == GrowthStage.Empty)
             {
@@ -128,15 +132,12 @@ namespace MyFreshMushroom
                     : !mushroom.HasValidCultivationSettings ? "재배 설정을 확인해 주세요"
                     : !inventory.CanAfford(mushroom.Id, ResourceKind.Spawn, 1) ? "종균이 부족합니다"
                     : !session.Cultivation.CanInoculate(state) ? "튜토리얼 안내를 진행해 주세요" : "종균 1개 필요";
-                statusText.text = $"{data.DisplayName}\n접종 대기 | {action}";
+                return $"{data.DisplayName}\n접종 대기 | {action}";
             }
-            else if (crop.Stage == GrowthStage.Ready)
-                statusText.text = $"{data.DisplayName}\n수확 가능 | 클릭하여 버섯 {crop.HarvestYield}개 수확";
-            else
-            {
-                string watered = crop.HasBeenWatered ? " | 물 주기 완료" : "";
-                statusText.text = $"{data.DisplayName}\n성장 {(int)crop.Stage}/4단계 | 남은 시간 {Math.Ceiling(crop.RemainingSeconds):0}초\n예상 수확량: {crop.HarvestYield}개{watered}";
-            }
+            if (crop.Stage == GrowthStage.Ready)
+                return $"{data.DisplayName}\n수확 가능 | 버섯 {crop.HarvestYield}개";
+            string watered = crop.HasBeenWatered ? " | 물 주기 완료" : "";
+            return $"{data.DisplayName}\n성장 {(int)crop.Stage}/4단계 | 남은 시간 {Math.Ceiling(crop.RemainingSeconds):0}초\n예상 수확량: {crop.HarvestYield}개{watered}";
         }
     }
 }
