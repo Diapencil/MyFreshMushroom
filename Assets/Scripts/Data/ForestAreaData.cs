@@ -21,15 +21,22 @@ namespace MyFreshMushroom
         public IReadOnlyList<GameObject> ExplorationMapPrefabs => explorationMapPrefabs;
         public float ExplorationCooldownSeconds => explorationCooldownSeconds;
 
+        public bool HasExplorationMaps
+        {
+            get
+            {
+                if (explorationMapPrefabs == null || explorationMapPrefabs.Length == 0) return false;
+                foreach (var candidate in explorationMapPrefabs)
+                    if (candidate == null) return false;
+                return true;
+            }
+        }
+
         public bool TryChooseExplorationMap(out GameObject prefab)
         {
-            prefab = null;
-            if (explorationMapPrefabs == null || explorationMapPrefabs.Length == 0) return false;
-            foreach (var candidate in explorationMapPrefabs)
-                if (candidate == null) return false;
-
-            prefab = explorationMapPrefabs[UnityEngine.Random.Range(0, explorationMapPrefabs.Length)];
-            return true;
+            prefab = HasExplorationMaps
+                ? explorationMapPrefabs[UnityEngine.Random.Range(0, explorationMapPrefabs.Length)] : null;
+            return prefab != null;
         }
 
         [Serializable]

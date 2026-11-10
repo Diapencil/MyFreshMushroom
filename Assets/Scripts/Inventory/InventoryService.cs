@@ -44,6 +44,21 @@ namespace MyFreshMushroom
             return true;
         }
 
+        internal bool TryDebitMushrooms(IReadOnlyDictionary<string, int> costs)
+        {
+            foreach (var cost in costs)
+                if (!CanAfford(cost.Key, ResourceKind.Mushroom, cost.Value)) return false;
+
+            foreach (var cost in costs)
+            {
+                var current = State.GetAmounts(cost.Key);
+                State.SetAmounts(cost.Key, new InventoryAmounts(current.Mushrooms - cost.Value, current.Spawn));
+            }
+            return true;
+        }
+
+        internal void NotifyChanged() => Changed?.Invoke();
+
         public bool CanExchangeMushroomsForSpawn(string mushroomId, int mushroomCost, int spawnOutput)
         {
             return mushroomCost > 0 && spawnOutput > 0

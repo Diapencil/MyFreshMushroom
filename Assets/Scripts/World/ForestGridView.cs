@@ -21,6 +21,10 @@ namespace MyFreshMushroom
             public Vector2 centre;
             public Vector2 size;
             public Color color;
+            public GameObject initialAppearancePrefab;
+            [NonSerialized] public Transform appearanceRoot;
+            [NonSerialized] public GameObject appliedPrefab;
+            [NonSerialized] public GameObject appearance;
         }
 
         [SerializeField, Range(1, 128)] private int size = 16;
@@ -29,6 +33,8 @@ namespace MyFreshMushroom
         [SerializeField] private FacilityView facilityPrefab;
         [SerializeField] private InitialFacility[] initialFacilities;
         [SerializeField] private AreaPlacement[] areas = Array.Empty<AreaPlacement>();
+        [SerializeField] private GameManager session;
+        [SerializeField] private ForestCamera forestCamera;
         [SerializeField] private Color groundColor = new Color(0.29f, 0.42f, 0.27f);
         [SerializeField] private Color alternateGroundColor = new Color(0.32f, 0.46f, 0.30f);
 
@@ -38,8 +44,29 @@ namespace MyFreshMushroom
         public FacilitySelection Selection { get; private set; }
         public int TileCount { get; private set; }
         public Bounds MapBounds { get; private set; }
+        public bool IsPresentingRestoration => pendingArea != null;
+        public event Action RestorationPresentationChanged;
+
+        private ForestAreaState pendingArea;
+        private ForestRestorationService restoration;
 
         private void Awake() => Initialize();
+
+        private void OnEnable()
+        {
+            if (session == null || !session.Initialize()) return;
+            restoration = session.Restoration;
+            restoration.Restored += PresentRestoration;
+            foreach (var area in session.ForestAreas.Values) ApplyAppearance(area);
+        }
+
+        private void OnDisable()
+        {
+            if (restoration != null) restoration.Restored -= PresentRestoration;
+            restoration = null;
+            if (pendingArea != null && forestCamera != null) forestCamera.FinishFocus();
+            pendingArea = null;
+        }
 
         public void Initialize()
         {
@@ -88,9 +115,11 @@ namespace MyFreshMushroom
             foreach (var area in areas)
             {
                 if (area.definition == null || area.size.x <= 0 || area.size.y <= 0) continue;
-                var marker = new GameObject(area.definition.DisplayName, typeof(SpriteRenderer));
-                marker.transform.SetParent(ground, false);
-                marker.transform.localPosition = area.centre;
+                area.appearanceRoot = new GameObject(area.definition.DisplayName).transform;
+                area.appearanceRoot.SetParent(ground, false);
+                area.appearanceRoot.localPosition = area.centre;
+                var marker = new GameObject("Area Ground", typeof(SpriteRenderer));
+                marker.transform.SetParent(area.appearanceRoot, false);
                 marker.transform.localScale = new Vector3(area.size.x / groundSprite.bounds.size.x,
                     area.size.y / groundSprite.bounds.size.y, 1);
                 var renderer = marker.GetComponent<SpriteRenderer>();
@@ -109,6 +138,54 @@ namespace MyFreshMushroom
             }
             Selection = new FacilitySelection(states);
             Selection.Changed += RefreshSelection;
+        }
+
+        private void PresentRestoration(ForestAreaState area)
+        {
+            var placement = FindPlacement(area.Definition);
+            if (placement == null) return;
+            if (pendingArea != null) forestCamera.FinishFocus();
+            pendingArea = area;
+            if (forestCamera == null || !forestCamera.TryFocus(placement.appearanceRoot.position, FinishRestoration))
+                FinishRestoration();
+            else
+                RestorationPresentationChanged?.Invoke();
+        }
+
+        private void FinishRestoration()
+        {
+            var area = pendingArea;
+            pendingArea = null;
+            if (area != null && isActiveAndEnabled) ApplyAppearance(area);
+            RestorationPresentationChanged?.Invoke();
+        }
+
+        private void ApplyAppearance(ForestAreaState area)
+        {
+            var placement = FindPlacement(area.Definition);
+            if (placement == null) return;
+            var prefab = placement.initialAppearancePrefab;
+            for (int i = 0; i < area.CompletedRestorationStages; i++)
+            {
+                var restored = area.Definition.RestorationStages[i]?.RestoredAppearancePrefab;
+                if (restored != null) prefab = restored;
+            }
+            if (placement.appliedPrefab == prefab) return;
+
+            if (placement.appearance != null)
+            {
+                placement.appearance.SetActive(false);
+                Destroy(placement.appearance);
+            }
+            placement.appearance = prefab != null ? Instantiate(prefab, placement.appearanceRoot) : null;
+            placement.appliedPrefab = prefab;
+        }
+
+        private AreaPlacement FindPlacement(ForestAreaData definition)
+        {
+            foreach (var area in areas)
+                if (area.definition == definition && area.appearanceRoot != null) return area;
+            return null;
         }
 
         public ForestAreaData FindAreaAt(Vector2 worldPosition)

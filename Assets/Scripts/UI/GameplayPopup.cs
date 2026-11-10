@@ -12,6 +12,9 @@ namespace MyFreshMushroom
         private readonly Text title;
         private readonly Text body;
         private readonly Button close;
+        private readonly RectTransform scrollArea;
+        private readonly RectTransform footer;
+        private readonly Button confirm;
         private RectTransform content;
         private Transform contentParent;
         private int contentIndex;
@@ -19,7 +22,7 @@ namespace MyFreshMushroom
         public RectTransform Window => window;
         public bool IsOpen => backdrop.gameObject.activeSelf;
 
-        public GameplayPopup(RectTransform canvas, KoreanUiFont font, Action onClose)
+        public GameplayPopup(RectTransform canvas, KoreanUiFont font, Action onClose, Action onConfirm)
         {
             backdrop = CreateImage("Popup Backdrop", canvas, new Color(0, 0, 0, 0.68f)).rectTransform;
             backdrop.anchorMax = Vector2.one;
@@ -34,7 +37,7 @@ namespace MyFreshMushroom
             title.rectTransform.offsetMin = new Vector2(20, -54);
             title.rectTransform.offsetMax = new Vector2(-64, 0);
 
-            var scrollArea = CreateRect("Popup Scroll Area", window);
+            scrollArea = CreateRect("Popup Scroll Area", window);
             scrollArea.anchorMax = Vector2.one;
             scrollArea.offsetMin = new Vector2(20, 20);
             scrollArea.offsetMax = new Vector2(-20, -58);
@@ -60,6 +63,18 @@ namespace MyFreshMushroom
             closeRect.anchorMin = closeRect.anchorMax = Vector2.one;
             closeRect.anchoredPosition = new Vector2(-28, -27);
             closeRect.sizeDelta = new Vector2(40, 40);
+
+            footer = CreateRect("Confirmation Actions", window);
+            footer.anchorMin = footer.anchorMax = new Vector2(1, 0);
+            footer.pivot = new Vector2(1, 0);
+            footer.anchoredPosition = new Vector2(-20, 20);
+            footer.sizeDelta = new Vector2(248, 44);
+            var cancel = CreateButton("Cancel Restoration", "취소", footer, font, onClose);
+            ((RectTransform)cancel.transform).anchoredPosition = new Vector2(60, 22);
+            ((RectTransform)cancel.transform).sizeDelta = new Vector2(120, 44);
+            confirm = CreateButton("Confirm Restoration", "복원 확정", footer, font, onConfirm);
+            ((RectTransform)confirm.transform).anchoredPosition = new Vector2(188, 22);
+            ((RectTransform)confirm.transform).sizeDelta = new Vector2(120, 44);
             Hide();
         }
 
@@ -71,6 +86,15 @@ namespace MyFreshMushroom
         }
 
         public void SetText(string description) => body.text = description;
+
+        public void ShowConfirmation(string heading)
+        {
+            ShowText(heading, "");
+            footer.gameObject.SetActive(true);
+            scrollArea.offsetMin = new Vector2(20, 80);
+        }
+
+        public void SetConfirmationInteractable(bool value) => confirm.interactable = value;
 
         public void ShowContent(string heading, RectTransform panel, float height)
         {
@@ -98,6 +122,8 @@ namespace MyFreshMushroom
         public void Hide()
         {
             if (backdrop == null) return;
+            footer.gameObject.SetActive(false);
+            scrollArea.offsetMin = new Vector2(20, 20);
             if (content != null)
             {
                 content.gameObject.SetActive(false);

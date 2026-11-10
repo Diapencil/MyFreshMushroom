@@ -48,7 +48,7 @@ namespace MyFreshMushroom
         private void Update()
         {
             var mouse = Mouse.current;
-            if (!ready || mouse == null) { pressed = dragged = false; return; }
+            if (!ready || mouse == null || forest.IsPresentingRestoration) { pressed = dragged = false; return; }
             Vector2 pointer = mouse.position.ReadValue();
             bool canMoveCamera = !session.IsGameplayPaused;
             if (mouse.leftButton.wasPressedThisFrame)
@@ -101,7 +101,7 @@ namespace MyFreshMushroom
 
         public bool TrySelectAtScreenPosition(Vector2 position)
         {
-            if (!ready || !isActiveAndEnabled || !CanPointAtWorld(position)) return false;
+            if (!ready || !isActiveAndEnabled || forest.IsPresentingRestoration || !CanPointAtWorld(position)) return false;
 
             var plane = new Plane(Vector3.forward, forest.transform.position);
             Ray ray = worldCamera.ScreenPointToRay(position);

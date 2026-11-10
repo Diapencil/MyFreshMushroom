@@ -15,6 +15,7 @@ namespace MyFreshMushroom
         [SerializeField] private bool enableTutorial = true;
         [SerializeField] private string tutorialShelfId = "starting-oyster-shelf";
         [SerializeField] private MushroomData firstExplorationMushroom;
+        [SerializeField] private ForestAreaData firstExplorationArea;
         [SerializeField, Min(1)] private int firstExplorationReward = 3;
         [SerializeField] private ForestAreaData[] forestAreas = System.Array.Empty<ForestAreaData>();
         [SerializeField] private MushroomData[] additionalMushrooms = System.Array.Empty<MushroomData>();
@@ -26,6 +27,7 @@ namespace MyFreshMushroom
         public SpawnProductionService SpawnProduction { get; private set; }
         public TutorialManager Tutorial { get; private set; }
         public ExplorationService Exploration { get; private set; }
+        public ForestRestorationService Restoration { get; private set; }
         public IReadOnlyList<MushroomData> Mushrooms { get; private set; }
         public IReadOnlyDictionary<string, ForestAreaState> ForestAreas { get; private set; }
         public bool IsInitialized => Inventory != null;
@@ -112,10 +114,12 @@ namespace MyFreshMushroom
             Cultivation = new CultivationService(inventory, facilities, Tutorial);
             SpawnProduction = new SpawnProductionService(inventory, progress, spawnRecipes ?? System.Array.Empty<SpawnRecipeData>(), Tutorial);
             Tutorial?.Bind(Cultivation, SpawnProduction);
-            Exploration = new ExplorationService(inventory, progress, firstExplorationMushroom.Id, firstExplorationReward, Tutorial);
+            Exploration = new ExplorationService(inventory, progress, firstExplorationArea,
+                firstExplorationMushroom.Id, firstExplorationReward, Tutorial);
             Tutorial?.BindExploration(Exploration);
             Mushrooms = mushrooms.AsReadOnly();
             ForestAreas = new ReadOnlyDictionary<string, ForestAreaState>(areaStates);
+            Restoration = new ForestRestorationService(inventory, ForestAreas, Tutorial);
             Progress = progress;
             Inventory = inventory;
             return true;

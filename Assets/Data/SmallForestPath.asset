@@ -16,5 +16,6 @@ MonoBehaviour:
   displayName: 작은 숲길
   startsOpenForExploration: 1
   restorationStages: []
-  explorationMapPrefabs: []
+  explorationMapPrefabs:
+  - {fileID: 100000, guid: 89ac250767dc4b7d8a629142d6212dc8, type: 3}
   explorationCooldownSeconds: 60

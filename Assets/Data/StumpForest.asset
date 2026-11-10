@@ -21,7 +21,8 @@ MonoBehaviour:
       quantity: 10
     - mushroom: {fileID: 11400000, guid: fe429714500746a7bdb3a66f1537d784, type: 2}
       quantity: 10
-    restoredAppearancePrefab: {fileID: 0}
+    restoredAppearancePrefab: {fileID: 100000, guid: 7425d3b6e4194ce99ccac903786ec00b, type: 3}
     opensExploration: 1
-  explorationMapPrefabs: []
+  explorationMapPrefabs:
+  - {fileID: 100000, guid: 2238ec3afbf0449dbe24d5505ce33aca, type: 3}
   explorationCooldownSeconds: 60

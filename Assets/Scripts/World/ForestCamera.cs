@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace MyFreshMushroom
@@ -9,9 +10,14 @@ namespace MyFreshMushroom
         [SerializeField, Min(0)] private float margin = 0.9f;
         [SerializeField, Min(0.1f)] private float minimumZoom = 1.5f;
         [SerializeField, Min(0.01f)] private float zoomSensitivity = 0.2f;
+        [SerializeField, Min(0)] private float restorationFocusSeconds = 0.65f;
         private Camera targetCamera;
         private float previousAspect;
         private float maximumZoom;
+        private Vector3 focusStart;
+        private Vector3 focusTarget;
+        private float focusElapsed;
+        private Action onFocusFinished;
 
         private void OnEnable()
         {
@@ -23,16 +29,48 @@ namespace MyFreshMushroom
         private void LateUpdate()
         {
             if (targetCamera.aspect != previousAspect) UpdateZoomLimit();
+            if (onFocusFinished == null) return;
+            focusElapsed += Time.unscaledDeltaTime;
+            float progress = Mathf.Clamp01(focusElapsed / restorationFocusSeconds);
+            transform.position = Vector3.Lerp(focusStart, focusTarget, Mathf.SmoothStep(0, 1, progress));
+            if (progress >= 1) FinishFocus();
         }
+
+        private void OnDisable() => FinishFocus();
 
         public void ShowWholeMap()
         {
+            FinishFocus();
             UpdateZoomLimit();
             if (maximumZoom <= 0) return;
             targetCamera.orthographicSize = maximumZoom;
             Vector3 centre = forest.MapBounds.center;
             centre.z = transform.position.z;
             transform.position = centre;
+        }
+
+        internal bool TryFocus(Vector3 centre, Action finished)
+        {
+            if (!isActiveAndEnabled || onFocusFinished != null) return false;
+            centre.z = transform.position.z;
+            if (restorationFocusSeconds <= 0 || transform.position == centre)
+            {
+                transform.position = centre;
+                return false;
+            }
+
+            focusStart = transform.position;
+            focusTarget = centre;
+            focusElapsed = 0;
+            onFocusFinished = finished;
+            return true;
+        }
+
+        internal void FinishFocus()
+        {
+            var finished = onFocusFinished;
+            onFocusFinished = null;
+            finished?.Invoke();
         }
 
         private void UpdateZoomLimit()

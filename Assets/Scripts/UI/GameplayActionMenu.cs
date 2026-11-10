@@ -10,7 +10,6 @@ namespace MyFreshMushroom
         [SerializeField] private GameManager session;
         [SerializeField] private RectTransform canvas;
         [SerializeField] private ExplorationManager exploration;
-        [SerializeField] private ForestAreaData smallForestPath;
         [SerializeField] private ForestGridView forest;
         [SerializeField] private FacilityPanel facilityPanel;
         [SerializeField] private SpawnProductionPanel productionPanel;
@@ -29,6 +28,7 @@ namespace MyFreshMushroom
         private Button production;
         private Button restore;
         private Button information;
+        private int restorationStage;
 
         public RectTransform HarvestTarget => harvest != null ? (RectTransform)harvest.transform : null;
         public RectTransform ProductionTarget => production == null ? null
@@ -36,7 +36,7 @@ namespace MyFreshMushroom
 
         private void OnEnable()
         {
-            if (worldInput == null || session == null || canvas == null || exploration == null || smallForestPath == null
+            if (worldInput == null || session == null || canvas == null || exploration == null
                 || forest == null || facilityPanel == null || productionPanel == null)
             {
                 Debug.LogError("GameplayActionMenu requires its canvas, selection and gameplay panel references.", this);
@@ -46,6 +46,7 @@ namespace MyFreshMushroom
             if (row == null) Build();
             row.gameObject.SetActive(true);
             forest.Selection.Changed += OnFacilityChanged;
+            forest.RestorationPresentationChanged += RefreshActions;
             worldInput.AreaSelectionChanged += OnContextChanged;
             session.Exploration.Changed += OnContextChanged;
             session.Progress.DiscoveryChanged += RefreshPopup;
@@ -59,6 +60,7 @@ namespace MyFreshMushroom
         {
             if (row == null) return;
             forest.Selection.Changed -= OnFacilityChanged;
+            forest.RestorationPresentationChanged -= RefreshActions;
             worldInput.AreaSelectionChanged -= OnContextChanged;
             session.Exploration.Changed -= OnContextChanged;
             session.Progress.DiscoveryChanged -= RefreshPopup;
@@ -100,11 +102,11 @@ namespace MyFreshMushroom
             AddToRow(facilityPanel.WaterButtonTransform);
             harvest = AddButton("Harvest", "수확", () => session.Cultivation.TryHarvest(selectedFacility));
             production = AddButton("Open Production", "종균 배양", OpenProduction);
-            restore = AddButton("Restoration", "복원하기", () => OpenText(PopupPage.Restoration, "구역 복원"));
+            restore = AddButton("Restoration", "복원하기", OpenRestoration);
             AddToRow((RectTransform)exploration.EnterButton.transform);
             AddToRow((RectTransform)exploration.ReturnButton.transform);
             information = AddButton("Information", "정보 보기", OpenInformation);
-            popup = new GameplayPopup(canvas, font, ClosePopup);
+            popup = new GameplayPopup(canvas, font, ClosePopup, ConfirmRestoration);
         }
 
         private Button AddButton(string name, string caption, System.Action action, int width = 128)
@@ -175,10 +177,13 @@ namespace MyFreshMushroom
             if (tutorial.Step == TutorialStep.AwaitFirstExploration && tutorial.IsMessageOpen)
                 forest.Selection.Select(null);
             RefreshActions();
+            if (page == PopupPage.Restoration) RefreshPopup();
         }
 
         private void RefreshActions()
         {
+            actions.interactable = page == PopupPage.None && !forest.IsPresentingRestoration;
+            if (forest.IsPresentingRestoration) return;
             bool exploring = session.Exploration.IsExploring;
             var area = worldInput.SelectedArea;
             bool facilitySelected = !exploring && selectedFacility != null;
@@ -191,9 +196,12 @@ namespace MyFreshMushroom
             harvest.gameObject.SetActive(facilitySelected && selectedFacility.Cultivation.Stage == GrowthStage.Ready);
             harvest.interactable = facilitySelected && session.Cultivation.CanHarvest(selectedFacility);
             production.gameObject.SetActive(facilitySelected && selectedFacility.Definition.Kind == FacilityKind.SpawnWorkbench);
-            restore.gameObject.SetActive(areaSelected && !area.IsExplorationUnlocked);
-            exploration.EnterButton.gameObject.SetActive(firstExploration
-                || areaSelected && area.Definition == smallForestPath && area.IsExplorationUnlocked);
+            restore.gameObject.SetActive(areaSelected
+                && area.CompletedRestorationStages < area.Definition.RestorationStages.Count);
+            exploration.EnterButton.gameObject.SetActive(firstExploration || areaSelected && area.IsExplorationUnlocked);
+            var entryArea = exploration.EntryArea;
+            exploration.EnterButton.interactable = session.Exploration.CanEnter(entryArea)
+                && entryArea.Definition.HasExplorationMaps;
             exploration.ReturnButton.gameObject.SetActive(exploring);
             information.gameObject.SetActive(facilitySelected || areaSelected || exploring);
         }
@@ -220,11 +228,31 @@ namespace MyFreshMushroom
             popup.ShowContent("종균 배양대", productionPanel.Content, productionPanel.PopupHeight);
         }
 
+        private void OpenRestoration()
+        {
+            var area = worldInput.SelectedArea;
+            if (area == null || session.IsGameplayPaused || forest.IsPresentingRestoration) return;
+            restorationStage = area.CompletedRestorationStages;
+            page = PopupPage.Restoration;
+            actions.interactable = false;
+            popup.ShowConfirmation("구역 복원");
+            RefreshPopup();
+        }
+
+        private void ConfirmRestoration()
+        {
+            if (page != PopupPage.Restoration) return;
+            if (session.Restoration.TryRestore(worldInput.SelectedArea, restorationStage))
+                OnContextChanged();
+            else
+                RefreshPopup();
+        }
+
         private void ClosePopup()
         {
             page = PopupPage.None;
             popup.Hide();
-            actions.interactable = true;
+            actions.interactable = !forest.IsPresentingRestoration;
         }
 
         private void RefreshFacilityPopup()
@@ -254,7 +282,7 @@ namespace MyFreshMushroom
         {
             if (area == null) return "";
             string access = area.IsExplorationUnlocked ? "탐험 개방" : "탐험 잠김";
-            string progress = area.Definition != smallForestPath ? "발견 정보 미등록"
+            string progress = area.Definition != session.Exploration.FirstArea ? "발견 정보 미등록"
                 : session.Progress.FirstExplorationCollected ? "발견 1/1 · 표고버섯" : "발견 0/1 · ?";
             int stages = area.Definition.RestorationStages.Count;
             string restoration = stages > 0 ? $"\n복원 {area.CompletedRestorationStages}/{stages}" : "";
@@ -263,20 +291,27 @@ namespace MyFreshMushroom
 
         private string DescribeRestoration(ForestAreaState area)
         {
-            if (area == null) return "";
-            var text = new StringBuilder(area.Definition.DisplayName);
-            var stages = area.Definition.RestorationStages;
-            if (area.CompletedRestorationStages < stages.Count)
+            if (!session.Restoration.TryGetCosts(area, restorationStage, out var costs))
             {
-                text.AppendLine().AppendLine().Append("필요 버섯 (보유 / 필요)");
-                foreach (var cost in stages[area.CompletedRestorationStages].Costs)
-                {
-                    if (cost?.Mushroom == null) continue;
-                    var stock = session.Inventory.State.GetAmounts(cost.Mushroom.Id);
-                    text.AppendLine().Append($"{cost.Mushroom.DisplayName}  {stock.Mushrooms} / {cost.Quantity}");
-                }
+                popup.SetConfirmationInteractable(false);
+                return "현재 복원할 수 있는 단계가 없습니다.";
             }
-            return text.AppendLine().AppendLine().Append("복원 실행은 준비 중입니다.").ToString();
+
+            bool sufficient = true;
+            var text = new StringBuilder(area.Definition.DisplayName)
+                .AppendLine().AppendLine($"복원 {restorationStage + 1}/{area.Definition.RestorationStages.Count}단계")
+                .AppendLine().Append("필요 버섯 (보유 / 필요)");
+            foreach (var mushroom in session.Mushrooms)
+            {
+                if (!costs.TryGetValue(mushroom.Id, out int required)) continue;
+                int stock = session.Inventory.State.GetAmounts(mushroom.Id).Mushrooms;
+                text.AppendLine().Append($"{mushroom.DisplayName}  {stock} / {required}");
+                if (stock >= required) continue;
+                sufficient = false;
+                text.Append($"  ({required - stock}개 부족)");
+            }
+            popup.SetConfirmationInteractable(sufficient && !session.IsGameplayPaused);
+            return text.ToString();
         }
 
         private string DescribeCatalogue()

@@ -173,6 +173,7 @@ MonoBehaviour:
   enableTutorial: 1
   tutorialShelfId: starting-oyster-shelf
   firstExplorationMushroom: {fileID: 11400000, guid: fe429714500746a7bdb3a66f1537d784, type: 2}
+  firstExplorationArea: {fileID: 11400000, guid: 1a1c42340b2ff8ef581a322000000000, type: 2}
   firstExplorationReward: 3
   forestAreas:
   - {fileID: 11400000, guid: 1a1c42340b2ff8ef581a322000000000, type: 2}
@@ -2969,11 +2970,6 @@ MonoBehaviour:
   returnButton: {fileID: 9002004}
   explorationInfo: {fileID: 9003000}
   statusText: {fileID: 9003103}
-  groundSprite: {fileID: 21300000, guid: f99dedd8095d48338ca9f00c6a3c02d7, type: 3}
-  logSprite: {fileID: 21300000, guid: 275dd8dbdb87496eb4b224d7c707ac18, type: 3}
-  mushroomSprite: {fileID: 21300000, guid: 396a8b84d6f246948eb3b26b6583378f, type: 3}
-  mapSize: 10
-  logCell: {x: 6, y: 6}
   minimumZoom: 1.2
   maximumZoom: 5.5
   zoomSensitivity: 0.2
@@ -3979,6 +3975,9 @@ MonoBehaviour:
     centre: {x: -7.5, y: 2}
     size: {x: 4, y: 2}
     color: {r: 0.53, g: 0.41, b: 0.28, a: 1}
+    initialAppearancePrefab: {fileID: 100000, guid: 1aeb6c6762394c46a9e633fe0a7df30e, type: 3}
+  session: {fileID: 1000102}
+  forestCamera: {fileID: 519420033}
   groundColor: {r: 0.29, g: 0.42, b: 0.27, a: 1}
   alternateGroundColor: {r: 0.32, g: 0.46, b: 0.3, a: 1}
 --- !u!4 &1208591389
@@ -4047,7 +4046,6 @@ MonoBehaviour:
   session: {fileID: 1000102}
   canvas: {fileID: 1000201}
   exploration: {fileID: 9000002}
-  smallForestPath: {fileID: 11400000, guid: 1a1c42340b2ff8ef581a322000000000, type: 2}
   forest: {fileID: 1208591388}
   facilityPanel: {fileID: 1832879001}
   productionPanel: {fileID: 6000002}
