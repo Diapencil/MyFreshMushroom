@@ -13,7 +13,7 @@ namespace MyFreshMushroom.Tests
     public sealed class ForestInteractionTests
     {
         [UnityTest]
-        public IEnumerator TutorialHarvestAndProductionUseTheActionMenuAndModal()
+        public IEnumerator CultivationProductionAndExplorationUsePrefabUiWithoutReparenting()
         {
             yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
             yield return null;
@@ -21,22 +21,26 @@ namespace MyFreshMushroom.Tests
             var forest = Object.FindFirstObjectByType<ForestGridView>();
             var input = Object.FindFirstObjectByType<WorldInteractionController>();
             var panel = Object.FindFirstObjectByType<SpawnProductionPanel>();
-            var shelf = session.Tutorial.GuidanceTarget;
+            var shelf = session.Tutorial?.GuidanceTarget
+                ?? forest.Facilities.Single(view => view.State.InstanceId == "starting-oyster-shelf").State;
             forest.Selection.Select(shelf);
 
             GameObject.Find("Inoculate Button").GetComponent<Button>().onClick.Invoke();
-            session.Tutorial.ContinueMessage();
+            session.Tutorial?.ContinueMessage();
             session.Cultivation.Tick(100);
             Assert.That(shelf.Cultivation.Stage, Is.EqualTo(GrowthStage.Ready));
             GameObject.Find("Harvest").GetComponent<Button>().onClick.Invoke();
-            Assert.That(session.Tutorial.Step, Is.EqualTo(TutorialStep.FirstSpawnProduction));
-            forest.Selection.Select(session.Tutorial.GuidanceTarget);
+            if (session.Tutorial != null) Assert.That(session.Tutorial.Step, Is.EqualTo(TutorialStep.FirstSpawnProduction));
+            forest.Selection.Select(session.Tutorial?.GuidanceTarget
+                ?? forest.Facilities.Single(view => view.State.Definition.Kind == FacilityKind.SpawnWorkbench).State);
             Assert.That(panel.Content.gameObject.activeInHierarchy, Is.False);
 
+            var contentParent = panel.Content.parent;
             var open = GameObject.Find("Open Production").GetComponent<Button>();
             open.onClick.Invoke();
             yield return null;
             Assert.That(panel.Content.parent.name, Is.EqualTo("Popup Window"));
+            Assert.That(panel.Content.parent, Is.SameAs(contentParent), "Opening production must not reparent its content.");
             Assert.That(panel.Content.gameObject.activeInHierarchy, Is.True);
             Assert.That(open.IsInteractable(), Is.False);
 
@@ -51,11 +55,63 @@ namespace MyFreshMushroom.Tests
 
             GameObject.Find("Close Popup").GetComponent<Button>().onClick.Invoke();
             Assert.That(panel.Content.gameObject.activeInHierarchy, Is.False);
+            Assert.That(panel.Content.parent, Is.SameAs(contentParent));
             Assert.That(open.IsInteractable(), Is.True);
             open.onClick.Invoke();
             GameObject.Find("Produce").GetComponent<Button>().onClick.Invoke();
-            Assert.That(session.Tutorial.Step, Is.EqualTo(TutorialStep.SecondInoculation));
+            if (session.Tutorial != null)
+                Assert.That(session.Tutorial.Step, Is.EqualTo(TutorialStep.SecondInoculation));
+            else
+                GameObject.Find("Close Popup").GetComponent<Button>().onClick.Invoke();
             Assert.That(panel.Content.gameObject.activeInHierarchy, Is.False);
+
+            // Exercise watering and the separate exploration confirmation popup with either tutorial setting.
+            forest.Selection.Select(shelf);
+            GameObject.Find("Inoculate Button").GetComponent<Button>().onClick.Invoke();
+            session.Cultivation.Tick(shelf.Cultivation.SecondsUntilWatering);
+            GameObject.Find("Water Button").GetComponent<Button>().onClick.Invoke();
+            if (session.Tutorial != null) Assert.That(session.Tutorial.Step, Is.EqualTo(TutorialStep.WateringComplete));
+            session.Tutorial?.ContinueMessage();
+            session.Cultivation.Tick(100);
+            GameObject.Find("Harvest").GetComponent<Button>().onClick.Invoke();
+            if (session.Tutorial != null) Assert.That(session.Tutorial.Step, Is.EqualTo(TutorialStep.AwaitFirstExploration));
+            session.Tutorial?.ContinueMessage();
+
+            var exploration = Object.FindFirstObjectByType<ExplorationManager>();
+            if (session.Tutorial == null)
+            {
+                forest.Selection.Select(null);
+                var area = forest.transform.Find("Ground/" + session.Exploration.FirstArea.DisplayName);
+                Canvas.ForceUpdateCanvases();
+                Assert.That(input.TrySelectAtScreenPosition(Camera.main.WorldToScreenPoint(area.position)), Is.True);
+            }
+            var buttonParent = exploration.EnterButton.transform.parent;
+            exploration.EnterButton.onClick.Invoke();
+            Assert.That(session.Exploration.IsExploring, Is.True);
+            session.Tutorial?.ContinueMessage();
+            exploration.ReturnButton.onClick.Invoke();
+            Assert.That(session.Exploration.IsExitConfirmationOpen, Is.True);
+            Assert.That(panel.Content.gameObject.activeInHierarchy, Is.False);
+            GameObject.Find("Cancel Confirmation").GetComponent<Button>().onClick.Invoke();
+            Assert.That(session.Exploration.IsExitConfirmationOpen, Is.False);
+            Assert.That(session.Exploration.IsExploring, Is.True);
+            exploration.ReturnButton.onClick.Invoke();
+            GameObject.Find("Confirm Action").GetComponent<Button>().onClick.Invoke();
+            Assert.That(session.Exploration.IsExploring, Is.False);
+            Assert.That(forest.gameObject.activeInHierarchy, Is.True);
+            Assert.That(exploration.EnterButton.transform.parent, Is.SameAs(buttonParent));
+            Assert.That(exploration.ReturnButton.transform.parent, Is.SameAs(buttonParent));
+            Assert.That(panel.Content.parent, Is.SameAs(contentParent));
+            yield return null;
+            var menu = Object.FindFirstObjectByType<GameplayActionMenu>();
+            int uiCount = buttonParent.root.GetComponentsInChildren<RectTransform>(true).Length;
+            menu.enabled = false;
+            menu.enabled = true;
+            Assert.That(buttonParent.root.GetComponentsInChildren<RectTransform>(true).Length, Is.EqualTo(uiCount));
+            Assert.That(Object.FindObjectsByType<GameplayPopup>(FindObjectsSortMode.None).Length, Is.EqualTo(2));
+            GameObject.Find("Mushroom Catalogue").GetComponent<Button>().onClick.Invoke();
+            Assert.That(GameObject.Find("Popup Backdrop"), Is.Not.Null);
+            GameObject.Find("Close Popup").GetComponent<Button>().onClick.Invoke();
         }
 
         [UnityTest]
@@ -73,8 +129,8 @@ namespace MyFreshMushroom.Tests
             forest.Initialize();
             Assert.That(forest.Facilities.Count, Is.EqualTo(3));
             Assert.That(forest.TileCount, Is.EqualTo(256));
-            var text = panel.GetComponentInChildren<Text>();
-            Assert.That(text.font != null && text.font.HasCharacter('M'), Is.True);
+            var buttonLabel = panel.InoculateButtonTransform.GetComponentInChildren<Text>(true);
+            Assert.That(buttonLabel.font != null && buttonLabel.font.HasCharacter('M'), Is.True);
             Physics2D.SyncTransforms();
             foreach (var view in forest.Facilities)
             {
@@ -85,13 +141,13 @@ namespace MyFreshMushroom.Tests
                 Assert.That(viewport.y, Is.InRange(0f, 1f));
                 Assert.That(input.TrySelectAtScreenPosition(camera.WorldToScreenPoint(centre)), Is.True);
                 Assert.That(forest.Selection.Selected, Is.SameAs(view.State));
-                StringAssert.Contains(view.State.Definition.DisplayName, text.text);
+                StringAssert.Contains(view.State.Definition.DisplayName, panel.Status);
                 Assert.That(view.GetComponent<LineRenderer>().enabled, Is.True);
             }
             var empty = forest.Grid.CellCenterToWorld(Vector2Int.zero);
             Assert.That(input.TrySelectAtScreenPosition(camera.WorldToScreenPoint(empty)), Is.True);
             Assert.That(forest.Selection.Selected, Is.Null);
-            StringAssert.Contains("시설 선택", text.text);
+            StringAssert.Contains("시설 선택", panel.Status);
         }
 
         [UnityTest]
@@ -101,7 +157,7 @@ namespace MyFreshMushroom.Tests
             yield return null;
             var forest = Object.FindFirstObjectByType<ForestGridView>();
             var input = Object.FindFirstObjectByType<WorldInteractionController>();
-            var shelf = forest.Facilities.Single(v => v.State.Definition.Kind == FacilityKind.CultivationShelf);
+            var shelf = forest.Facilities.Single(v => v.State.InstanceId == "starting-oyster-shelf");
             var bench = forest.Facilities.Single(v => v.State.Definition.Kind == FacilityKind.SpawnWorkbench);
             forest.Selection.Select(shelf.State);
             var inventory = Object.FindFirstObjectByType<InventoryPanel>();

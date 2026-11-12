@@ -10,14 +10,14 @@ namespace MyFreshMushroom
         [SerializeField] private ForestGridView forest;
         [SerializeField] private GameObject content;
         [SerializeField] private RectTransform recipeList;
-        [SerializeField] private Button recipeButtonTemplate;
-        [SerializeField] private Text titleText;
+        [SerializeField] private Button recipeButtonPrefab;
         [SerializeField] private Text detailsText;
         [SerializeField] private Text countText;
         [SerializeField] private Text feedbackText;
         [SerializeField] private Button decreaseButton;
         [SerializeField] private Button increaseButton;
         [SerializeField] private Button produceButton;
+        [SerializeField, Min(1)] private float basePopupHeight = 340;
 
         private readonly KoreanUiFont uiFont = new KoreanUiFont();
         private readonly List<Button> recipeButtons = new List<Button>();
@@ -30,12 +30,20 @@ namespace MyFreshMushroom
         private SpawnProductionService production;
         private TutorialManager tutorial;
         public RectTransform Content => (RectTransform)content.transform;
-        public float PopupHeight => 340 + 44 * Mathf.Max(0, recipeButtons.Count - 1);
+        public float PopupHeight
+        {
+            get
+            {
+                float rowHeight = LayoutUtility.GetPreferredHeight((RectTransform)recipeButtonPrefab.transform);
+                float spacing = recipeList.TryGetComponent<VerticalLayoutGroup>(out var layout) ? layout.spacing : 0;
+                return basePopupHeight + (rowHeight + spacing) * Mathf.Max(0, recipeButtons.Count - 1);
+            }
+        }
 
         private void OnEnable()
         {
-            if (session == null || forest == null || content == null || recipeList == null || recipeButtonTemplate == null
-                || titleText == null || detailsText == null || countText == null || feedbackText == null
+            if (session == null || forest == null || content == null || recipeList == null || recipeButtonPrefab == null
+                || detailsText == null || countText == null || feedbackText == null
                 || decreaseButton == null || increaseButton == null || produceButton == null)
             {
                 Debug.LogError("SpawnProductionPanel requires all scene references.", this);
@@ -49,7 +57,6 @@ namespace MyFreshMushroom
             tutorial = session.Tutorial;
             if (tutorial != null) tutorial.Changed += Refresh;
             foreach (var label in content.GetComponentsInChildren<Text>(true)) uiFont.Apply(label);
-            titleText.enabled = false;
             decreaseButton.onClick.AddListener(Decrease);
             increaseButton.onClick.AddListener(Increase);
             produceButton.onClick.AddListener(Produce);
@@ -99,9 +106,7 @@ namespace MyFreshMushroom
             foreach (var recipe in production.Recipes)
             {
                 if (!production.IsAvailable(recipe)) continue;
-                var button = Instantiate(recipeButtonTemplate, recipeList);
-                var rect = (RectTransform)button.transform;
-                rect.anchoredPosition = new Vector2(0, -44 * recipeButtons.Count);
+                var button = Instantiate(recipeButtonPrefab, recipeList);
                 var label = button.GetComponentInChildren<Text>(true);
                 label.text = recipe.Mushroom.DisplayName;
                 uiFont.Apply(label);
@@ -111,7 +116,6 @@ namespace MyFreshMushroom
                 visibleRecipes.Add(recipe);
                 if (selectedRecipe == null) selectedRecipe = recipe;
             }
-            recipeList.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 44 * Mathf.Max(1, recipeButtons.Count));
         }
 
         private void SelectRecipe(SpawnRecipeData recipe)

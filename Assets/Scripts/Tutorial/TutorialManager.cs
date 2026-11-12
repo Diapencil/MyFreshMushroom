@@ -100,7 +100,7 @@ namespace MyFreshMushroom
         private void OnExplorationCollected(string mushroomId, int quantity)
         {
             if (Step == TutorialStep.FindFirstMushroom && mushroomId == exploration.MushroomId
-                && quantity == exploration.RewardQuantity && progress.FirstExplorationCollected
+                && quantity > 0 && progress.FirstExplorationCollected
                 && progress.IsDiscovered(mushroomId)) SetStep(TutorialStep.Completed);
         }
 

@@ -7,7 +7,6 @@ namespace MyFreshMushroom
     public sealed class FacilityPanel : MonoBehaviour
     {
         [SerializeField] private ForestGridView forest;
-        [SerializeField] private Text statusText;
         [SerializeField] private GameManager session;
         [SerializeField] private Button inoculateButton;
         [SerializeField] private Button waterButton;
@@ -18,26 +17,23 @@ namespace MyFreshMushroom
         private readonly KoreanUiFont uiFont = new KoreanUiFont();
         public RectTransform InoculateButtonTransform => (RectTransform)inoculateButton.transform;
         public RectTransform WaterButtonTransform => (RectTransform)waterButton.transform;
-        public string Status => statusText.text;
+        public string Status { get; private set; } = "";
         public event Action StatusChanged;
 
         private void OnEnable()
         {
-            if (forest == null || statusText == null || session == null || inoculateButton == null || waterButton == null)
+            if (forest == null || session == null || inoculateButton == null || waterButton == null)
             {
-                Debug.LogError("FacilityPanel requires forest, status text, GameManager, inoculation and watering buttons.", this);
+                Debug.LogError("FacilityPanel requires forest, GameManager, inoculation and watering buttons.", this);
                 return;
             }
             forest.Initialize();
             if (!session.Initialize()) return;
             inventory = session.Inventory;
-            if (TryGetComponent<Image>(out var background)) background.enabled = false;
-            statusText.enabled = false;
             tutorial = session.Tutorial;
             if (tutorial != null) tutorial.Changed += RefreshCurrent;
             inoculateButton.onClick.AddListener(InoculateSelected);
             waterButton.onClick.AddListener(WaterSelected);
-            uiFont.Apply(statusText);
             ConfigureButtonLabel();
             var waterLabel = waterButton.GetComponentInChildren<Text>(true);
             if (waterLabel != null)
@@ -113,7 +109,7 @@ namespace MyFreshMushroom
                 && state.Cultivation.Stage == GrowthStage.Empty;
             inoculateButton.gameObject.SetActive(emptyShelf);
             inoculateButton.interactable = emptyShelf && session.Cultivation.CanInoculate(state);
-            statusText.text = Describe(state);
+            Status = Describe(state);
             StatusChanged?.Invoke();
         }
 

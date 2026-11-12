@@ -16,7 +16,8 @@ namespace MyFreshMushroom
         [SerializeField] private string tutorialShelfId = "starting-oyster-shelf";
         [SerializeField] private MushroomData firstExplorationMushroom;
         [SerializeField] private ForestAreaData firstExplorationArea;
-        [SerializeField, Min(1)] private int firstExplorationReward = 3;
+        // Used only when loading an old map without explicit collectible settings.
+        [SerializeField, HideInInspector, Min(1)] private int firstExplorationReward = 3;
         [SerializeField] private ForestAreaData[] forestAreas = System.Array.Empty<ForestAreaData>();
         [SerializeField] private MushroomData[] additionalMushrooms = System.Array.Empty<MushroomData>();
 
@@ -32,6 +33,7 @@ namespace MyFreshMushroom
         public IReadOnlyDictionary<string, ForestAreaState> ForestAreas { get; private set; }
         public bool IsInitialized => Inventory != null;
         public bool IsGameplayPaused => Tutorial != null && Tutorial.IsGameplayPaused;
+        internal int LegacyFirstExplorationReward => firstExplorationReward;
 
         private void Awake()
         {
@@ -41,7 +43,9 @@ namespace MyFreshMushroom
         private void Update()
         {
             // Menus and future exploration screens share this running-session clock.
-            if (IsInitialized && !IsGameplayPaused) Cultivation.Tick(Time.unscaledDeltaTime);
+            if (!IsInitialized || IsGameplayPaused) return;
+            Exploration.Tick(Time.unscaledDeltaTime);
+            Cultivation.Tick(Time.unscaledDeltaTime);
         }
 
         // Views may initialize first, so initialization must not depend on Awake order.
@@ -115,7 +119,7 @@ namespace MyFreshMushroom
             SpawnProduction = new SpawnProductionService(inventory, progress, spawnRecipes ?? System.Array.Empty<SpawnRecipeData>(), Tutorial);
             Tutorial?.Bind(Cultivation, SpawnProduction);
             Exploration = new ExplorationService(inventory, progress, firstExplorationArea,
-                firstExplorationMushroom.Id, firstExplorationReward, Tutorial);
+                firstExplorationMushroom.Id, mushrooms, areaStates, Tutorial);
             Tutorial?.BindExploration(Exploration);
             Mushrooms = mushrooms.AsReadOnly();
             ForestAreas = new ReadOnlyDictionary<string, ForestAreaState>(areaStates);

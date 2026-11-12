@@ -11,15 +11,11 @@ namespace MyFreshMushroom
         [SerializeField] private GameManager session;
         [SerializeField] private ForestGridView forest;
         [SerializeField] private WorldInteractionController worldInput;
-        [SerializeField] private FacilityPanel facilityPanel;
-        [SerializeField] private SpawnProductionPanel productionPanel;
         [SerializeField] private Camera worldCamera;
         [SerializeField] private ForestCamera forestCamera;
         [SerializeField] private EventSystem eventSystem;
         [SerializeField] private Button enterButton;
         [SerializeField] private Button returnButton;
-        [SerializeField] private GameObject explorationInfo;
-        [SerializeField] private Text statusText;
         [SerializeField, Min(0.1f)] private float minimumZoom = 1.2f;
         [SerializeField, Min(0.1f)] private float maximumZoom = 5.5f;
         [SerializeField, Min(0.01f)] private float zoomSensitivity = 0.2f;
@@ -35,10 +31,11 @@ namespace MyFreshMushroom
         private bool dragged;
         private Vector2 pressPosition;
         private Vector2 previousPosition;
+        private string lastReward;
 
         public Button EnterButton => enterButton;
         public Button ReturnButton => returnButton;
-        public string Status => statusText.text;
+        public string Status { get; private set; } = "";
 
         public ForestAreaState EntryArea
         {
@@ -53,24 +50,23 @@ namespace MyFreshMushroom
 
         private void OnEnable()
         {
-            if (session == null || forest == null || worldInput == null || facilityPanel == null || productionPanel == null
+            if (session == null || forest == null || worldInput == null
                 || worldCamera == null || forestCamera == null || eventSystem == null || enterButton == null
-                || returnButton == null || explorationInfo == null || statusText == null)
+                || returnButton == null)
             {
                 Debug.LogError("ExplorationManager requires its session, camera and UI references.", this);
                 return;
             }
             if (!session.Initialize()) return;
             exploration = session.Exploration;
-            uiFont.Apply(statusText);
             foreach (var button in new[] { enterButton, returnButton })
                 uiFont.Apply(button.GetComponentInChildren<Text>(true));
             var returnLabel = returnButton.GetComponentInChildren<Text>(true);
             if (returnLabel != null) returnLabel.text = "돌아가기";
             enterButton.onClick.AddListener(Enter);
             returnButton.onClick.AddListener(Return);
-            explorationInfo.SetActive(false);
             exploration.Changed += Refresh;
+            exploration.Collected += OnCollected;
             if (session.Tutorial != null) session.Tutorial.Changed += Refresh;
             Refresh();
         }
@@ -88,15 +84,16 @@ namespace MyFreshMushroom
             }
 
             activeMap = Instantiate(mapPrefab, forest.transform.position, Quaternion.identity, transform);
-            bool requiresFirstDiscovery = area.Definition == exploration.FirstArea && !exploration.IsCollected;
-            if (!activeMap.Prepare(requiresFirstDiscovery))
+            if (!activeMap.Prepare(exploration.FirstMushroom, session.LegacyFirstExplorationReward))
             {
                 Debug.LogError($"Invalid exploration map configuration: {prefab.name}.", prefab);
                 RemoveMap();
                 return;
             }
-            if (!exploration.TryEnter(area))
+            lastReward = null;
+            if (!exploration.TryEnter(area, activeMap.Targets))
             {
+                Debug.LogError($"Exploration map contains invalid or unregistered mushroom targets: {prefab.name}.", prefab);
                 RemoveMap();
                 return;
             }
@@ -107,8 +104,6 @@ namespace MyFreshMushroom
             forest.Selection.Select(null);
             forestCamera.enabled = false;
             worldInput.enabled = false;
-            facilityPanel.gameObject.SetActive(false);
-            productionPanel.gameObject.SetActive(false);
             forest.gameObject.SetActive(false);
             var centre = activeMap.CameraBounds.center;
             worldCamera.transform.position = new Vector3(centre.x, centre.y, savedPosition.z);
@@ -120,8 +115,12 @@ namespace MyFreshMushroom
 
         private void Return()
         {
-            if (exploration?.IsExploring != true || session.IsGameplayPaused) return;
-            ExitExploration();
+            exploration?.RequestLeave();
+        }
+
+        internal void ConfirmReturn()
+        {
+            if (exploration?.TryConfirmLeave() == true) ExitExploration();
         }
 
         private void ExitExploration()
@@ -132,8 +131,6 @@ namespace MyFreshMushroom
             worldCamera.orthographicSize = savedSize;
             worldCamera.backgroundColor = savedBackground;
             forestCamera.enabled = true;
-            facilityPanel.gameObject.SetActive(true);
-            productionPanel.gameObject.SetActive(true);
             worldInput.enabled = true;
             pressed = dragged = false;
             exploration.Leave();
@@ -149,17 +146,21 @@ namespace MyFreshMushroom
 
         private void Refresh()
         {
-            returnButton.interactable = !session.IsGameplayPaused;
+            returnButton.interactable = !session.IsGameplayPaused && !exploration.IsExitConfirmationOpen;
             var area = exploration.ActiveArea;
             if (area == null || activeMap == null) return;
-            bool firstArea = area.Definition == exploration.FirstArea;
-            var target = activeMap.FirstDiscoveryTarget;
-            if (target != null) target.gameObject.SetActive(firstArea && !exploration.IsCollected);
+            foreach (var item in activeMap.Collectibles)
+                item.Sprite.enabled = !exploration.IsTargetCollected(item.Id);
             const string controls = "드래그: 화면 이동 / 휠: 확대·축소";
-            statusText.text = !firstArea ? $"{area.Definition.DisplayName}\n{controls}"
-                : exploration.IsCollected
-                    ? $"표고버섯 {exploration.RewardQuantity}개를 발견했어요!\n숲으로 돌아가 재배를 이어가세요."
-                    : $"첫 탐험 · 통나무 주변을 살펴보세요\n{controls}\n보이는 버섯을 누르면 바로 획득합니다.";
+            Status = $"{area.Definition.DisplayName}\n{controls}\n"
+                + $"채집 {exploration.CollectedCount}/{exploration.TargetCount}"
+                + (lastReward == null ? "\n보이는 버섯을 누르면 바로 획득합니다." : $"\n{lastReward}");
+        }
+
+        private void OnCollected(string mushroomId, int quantity)
+        {
+            foreach (var mushroom in session.Mushrooms)
+                if (mushroom.Id == mushroomId) lastReward = $"{mushroom.DisplayName} {quantity}개 획득";
         }
 
         private bool IsOverUi(Vector2 position)
@@ -175,7 +176,7 @@ namespace MyFreshMushroom
         private void Update()
         {
             if (activeMap == null || !exploration.IsExploring || Mouse.current == null) return;
-            if (session.IsGameplayPaused) { pressed = dragged = false; return; }
+            if (session.IsGameplayPaused || exploration.IsExitConfirmationOpen) { pressed = dragged = false; return; }
             var mouse = Mouse.current;
             Vector2 point = mouse.position.ReadValue();
             bool overUi = IsOverUi(point);
@@ -205,21 +206,28 @@ namespace MyFreshMushroom
                 }
                 previousPosition = point;
             }
-            var mushroom = activeMap.FirstDiscoveryTarget;
-            bool hovering = false;
-            if (mushroom != null && mushroom.gameObject.activeInHierarchy)
+            ExplorationMap.Collectible hovered = null;
+            if (!overUi)
             {
-                Bounds target = mushroom.bounds;
-                target.size = Vector3.Max(target.size, new Vector3(0.7f, 0.6f, 0.1f));
                 Vector3 worldPoint = ScreenToWorld(point);
-                worldPoint.z = target.center.z;
-                hovering = !overUi && target.Contains(worldPoint);
-                mushroom.color = hovering && !dragged ? new Color(1, 0.88f, 0.65f) : Color.white;
+                foreach (var item in activeMap.Collectibles)
+                {
+                    var sprite = item.Sprite;
+                    if (!sprite.enabled || !sprite.gameObject.activeInHierarchy || exploration.IsTargetCollected(item.Id)) continue;
+                    Bounds bounds = sprite.bounds;
+                    bounds.size = Vector3.Max(bounds.size, new Vector3(0.7f, 0.6f, 0.1f));
+                    worldPoint.z = bounds.center.z;
+                    if (!bounds.Contains(worldPoint)) continue;
+                    if (hovered == null || SortingLayer.GetLayerValueFromID(sprite.sortingLayerID)
+                        > SortingLayer.GetLayerValueFromID(hovered.Sprite.sortingLayerID)
+                        || sprite.sortingLayerID == hovered.Sprite.sortingLayerID
+                        && sprite.sortingOrder > hovered.Sprite.sortingOrder) hovered = item;
+                }
             }
             if (mouse.leftButton.wasReleasedThisFrame)
             {
                 if ((point - pressPosition).sqrMagnitude > 25) dragged = true;
-                if (pressed && !dragged && hovering) exploration.TryCollect();
+                if (pressed && !dragged && hovered != null) exploration.TryCollect(hovered.Id);
                 pressed = dragged = false;
             }
         }
@@ -244,6 +252,7 @@ namespace MyFreshMushroom
             if (enterButton != null) enterButton.onClick.RemoveListener(Enter);
             if (returnButton != null) returnButton.onClick.RemoveListener(Return);
             if (exploration != null) exploration.Changed -= Refresh;
+            if (exploration != null) exploration.Collected -= OnCollected;
             if (session != null && session.Tutorial != null) session.Tutorial.Changed -= Refresh;
         }
 

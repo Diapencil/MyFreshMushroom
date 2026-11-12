@@ -23,6 +23,13 @@ namespace MyFreshMushroom
 
         public bool TryAdd(string mushroomId, ResourceKind kind, int amount)
         {
+            if (!TryAddSilently(mushroomId, kind, amount)) return false;
+            Changed?.Invoke();
+            return true;
+        }
+
+        internal bool TryAddSilently(string mushroomId, ResourceKind kind, int amount)
+        {
             if (amount <= 0 || !IsValidKind(kind) || !State.TryGetAmounts(mushroomId, out var current))
                 return false;
 
@@ -30,7 +37,7 @@ namespace MyFreshMushroom
             if (quantity > int.MaxValue - amount)
                 return false;
 
-            Apply(mushroomId, kind, current, quantity + amount);
+            Apply(mushroomId, kind, current, quantity + amount, false);
             return true;
         }
 
@@ -76,14 +83,14 @@ namespace MyFreshMushroom
             return true;
         }
 
-        private void Apply(string mushroomId, ResourceKind kind, InventoryAmounts current, int quantity)
+        private void Apply(string mushroomId, ResourceKind kind, InventoryAmounts current, int quantity, bool notify = true)
         {
             var updated = kind == ResourceKind.Mushroom
                 ? new InventoryAmounts(quantity, current.Spawn)
                 : new InventoryAmounts(current.Mushrooms, quantity);
 
             State.SetAmounts(mushroomId, updated);
-            Changed?.Invoke();
+            if (notify) Changed?.Invoke();
         }
 
         private static int GetQuantity(InventoryAmounts amounts, ResourceKind kind)

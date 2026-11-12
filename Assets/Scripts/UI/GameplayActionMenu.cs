@@ -1,4 +1,5 @@
 using System.Text;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,47 +9,62 @@ namespace MyFreshMushroom
     {
         [SerializeField] private WorldInteractionController worldInput;
         [SerializeField] private GameManager session;
-        [SerializeField] private RectTransform canvas;
         [SerializeField] private ExplorationManager exploration;
         [SerializeField] private ForestGridView forest;
         [SerializeField] private FacilityPanel facilityPanel;
         [SerializeField] private SpawnProductionPanel productionPanel;
+        [SerializeField] private bool showCooldownAsMinutesAndSeconds;
 
-        private enum PopupPage { None, Facility, Area, Restoration, Catalogue, Production, Exploration }
+        private enum PopupPage { None, Facility, Area, Restoration, Catalogue, Production, Exploration, ExitExploration }
 
         private readonly KoreanUiFont font = new KoreanUiFont();
-        private RectTransform row;
-        private CanvasGroup actions;
-        private GameplayPopup popup;
+        [SerializeField] private RectTransform row;
+        [SerializeField] private CanvasGroup actions;
+        [SerializeField] private GameplayPopup popup;
+        [SerializeField] private GameplayPopup productionPopup;
+        private bool bound;
         private PopupPage page;
         private FacilityState selectedFacility;
-        private Button build;
-        private Button catalogue;
-        private Button harvest;
-        private Button production;
-        private Button restore;
-        private Button information;
+        [SerializeField] private Button build;
+        [SerializeField] private Button catalogue;
+        [SerializeField] private Button harvest;
+        [SerializeField] private Button production;
+        [SerializeField] private Button restore;
+        [SerializeField] private Button information;
         private int restorationStage;
+        private bool hintRevealed;
 
         public RectTransform HarvestTarget => harvest != null ? (RectTransform)harvest.transform : null;
         public RectTransform ProductionTarget => production == null ? null
-            : page == PopupPage.Production ? popup.Window : (RectTransform)production.transform;
+            : page == PopupPage.Production ? productionPopup.Window : (RectTransform)production.transform;
 
         private void OnEnable()
         {
-            if (worldInput == null || session == null || canvas == null || exploration == null
-                || forest == null || facilityPanel == null || productionPanel == null)
+            if (worldInput == null || session == null || exploration == null
+                || forest == null || facilityPanel == null || productionPanel == null
+                || row == null || actions == null || popup == null || productionPopup == null
+                || build == null || catalogue == null || harvest == null || production == null
+                || restore == null || information == null)
             {
-                Debug.LogError("GameplayActionMenu requires its canvas, selection and gameplay panel references.", this);
+                Debug.LogError("GameplayActionMenu requires its prefab UI, selection and gameplay panel references.", this);
                 return;
             }
             if (!session.Initialize()) return;
-            if (row == null) Build();
+            if (!popup.Initialize(font, ClosePopupFromButton, ConfirmRestoration)
+                || !productionPopup.Initialize(font, ClosePopupFromButton, null)) return;
+            foreach (var label in row.GetComponentsInChildren<Text>(true)) font.Apply(label);
+            catalogue.onClick.AddListener(OpenCatalogue);
+            harvest.onClick.AddListener(HarvestSelected);
+            production.onClick.AddListener(OpenProduction);
+            restore.onClick.AddListener(OpenRestoration);
+            information.onClick.AddListener(OpenInformation);
+            bound = true;
             row.gameObject.SetActive(true);
             forest.Selection.Changed += OnFacilityChanged;
             forest.RestorationPresentationChanged += RefreshActions;
             worldInput.AreaSelectionChanged += OnContextChanged;
             session.Exploration.Changed += OnContextChanged;
+            session.Exploration.CooldownChanged += OnCooldownChanged;
             session.Progress.DiscoveryChanged += RefreshPopup;
             session.Inventory.Changed += RefreshPopup;
             facilityPanel.StatusChanged += RefreshFacilityPopup;
@@ -58,11 +74,18 @@ namespace MyFreshMushroom
 
         private void OnDisable()
         {
-            if (row == null) return;
+            if (!bound) return;
+            bound = false;
+            catalogue.onClick.RemoveListener(OpenCatalogue);
+            harvest.onClick.RemoveListener(HarvestSelected);
+            production.onClick.RemoveListener(OpenProduction);
+            restore.onClick.RemoveListener(OpenRestoration);
+            information.onClick.RemoveListener(OpenInformation);
             forest.Selection.Changed -= OnFacilityChanged;
             forest.RestorationPresentationChanged -= RefreshActions;
             worldInput.AreaSelectionChanged -= OnContextChanged;
             session.Exploration.Changed -= OnContextChanged;
+            session.Exploration.CooldownChanged -= OnCooldownChanged;
             session.Progress.DiscoveryChanged -= RefreshPopup;
             session.Inventory.Changed -= RefreshPopup;
             facilityPanel.StatusChanged -= RefreshFacilityPopup;
@@ -70,90 +93,13 @@ namespace MyFreshMushroom
             if (selectedFacility != null) selectedFacility.Cultivation.Changed -= RefreshActions;
             selectedFacility = null;
             ClosePopup();
-            row.gameObject.SetActive(false);
+            if (row != null) row.gameObject.SetActive(false);
         }
 
-        private void OnDestroy()
-        {
-            popup?.Destroy();
-            if (row != null) Destroy(row.gameObject);
-            font.Dispose();
-        }
+        private void OnDestroy() => font.Dispose();
 
-        private void Build()
-        {
-            row = GameplayPopup.CreateRect("Context Actions", canvas);
-            row.anchorMin = row.anchorMax = row.pivot = new Vector2(1, 0);
-            row.anchoredPosition = new Vector2(-24, 24);
-            actions = row.gameObject.AddComponent<CanvasGroup>();
-            var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 8;
-            layout.childControlWidth = layout.childControlHeight = true;
-            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
-            var fitter = row.gameObject.AddComponent<ContentSizeFitter>();
-            fitter.horizontalFit = fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            build = AddButton("Build", "건설", null, 84);
-            build.interactable = false;
-            AddIcon(build, true);
-            catalogue = AddButton("Mushroom Catalogue", "도감", () => OpenText(PopupPage.Catalogue, "버섯 도감"), 84);
-            AddIcon(catalogue, false);
-            AddToRow(facilityPanel.InoculateButtonTransform);
-            AddToRow(facilityPanel.WaterButtonTransform);
-            harvest = AddButton("Harvest", "수확", () => session.Cultivation.TryHarvest(selectedFacility));
-            production = AddButton("Open Production", "종균 배양", OpenProduction);
-            restore = AddButton("Restoration", "복원하기", OpenRestoration);
-            AddToRow((RectTransform)exploration.EnterButton.transform);
-            AddToRow((RectTransform)exploration.ReturnButton.transform);
-            information = AddButton("Information", "정보 보기", OpenInformation);
-            popup = new GameplayPopup(canvas, font, ClosePopup, ConfirmRestoration);
-        }
-
-        private Button AddButton(string name, string caption, System.Action action, int width = 128)
-        {
-            var button = GameplayPopup.CreateButton(name, caption, row, font, action);
-            AddToRow((RectTransform)button.transform, width);
-            return button;
-        }
-
-        private void AddToRow(RectTransform rect, int width = 128)
-        {
-            rect.SetParent(row, false);
-            var size = rect.gameObject.AddComponent<LayoutElement>();
-            size.preferredWidth = width;
-            size.preferredHeight = 52;
-        }
-
-        private static void AddIcon(Button button, bool house)
-        {
-            var label = button.GetComponentInChildren<Text>();
-            label.fontSize = 16;
-            label.rectTransform.offsetMin = new Vector2(0, 1);
-            label.rectTransform.offsetMax = new Vector2(0, -26);
-            var icon = GameplayPopup.CreateRect("Icon", button.transform);
-            icon.anchorMin = icon.anchorMax = new Vector2(0.5f, 1);
-            icon.anchoredPosition = new Vector2(0, -14);
-            if (house)
-            {
-                AddIconLine(icon, new Vector2(-4, 3), new Vector2(11, 2), 42);
-                AddIconLine(icon, new Vector2(4, 3), new Vector2(11, 2), -42);
-                AddIconLine(icon, new Vector2(0, -4), new Vector2(12, 6), 0);
-            }
-            else
-            {
-                AddIconLine(icon, new Vector2(-4.5f, 0), new Vector2(8, 13), 0);
-                AddIconLine(icon, new Vector2(4.5f, 0), new Vector2(8, 13), 0);
-            }
-        }
-
-        private static void AddIconLine(RectTransform icon, Vector2 position, Vector2 size, float angle)
-        {
-            var image = GameplayPopup.CreateImage("Mark", icon, new Color(0.84f, 0.91f, 0.74f));
-            image.raycastTarget = false;
-            image.rectTransform.anchoredPosition = position;
-            image.rectTransform.sizeDelta = size;
-            image.rectTransform.localEulerAngles = new Vector3(0, 0, angle);
-        }
+        private void OpenCatalogue() => OpenText(PopupPage.Catalogue, "버섯 도감");
+        private void HarvestSelected() => session.Cultivation.TryHarvest(selectedFacility);
 
         private void OnFacilityChanged(FacilityState facility)
         {
@@ -166,6 +112,13 @@ namespace MyFreshMushroom
         private void OnContextChanged()
         {
             ClosePopup();
+            if (session.Exploration.IsExitConfirmationOpen)
+            {
+                page = PopupPage.ExitExploration;
+                hintRevealed = false;
+                popup.ShowExitConfirmation(session.Exploration.RemainingCount > 0, exploration.ConfirmReturn, ShowHint);
+                RefreshPopup();
+            }
             RefreshActions();
         }
 
@@ -178,6 +131,19 @@ namespace MyFreshMushroom
                 forest.Selection.Select(null);
             RefreshActions();
             if (page == PopupPage.Restoration) RefreshPopup();
+        }
+
+        private void OnCooldownChanged()
+        {
+            RefreshActions();
+            if (page == PopupPage.Area) RefreshPopup();
+        }
+
+        private string FormatCooldown(double remaining)
+        {
+            double seconds = System.Math.Ceiling(remaining);
+            return showCooldownAsMinutesAndSeconds
+                ? $"{System.Math.Floor(seconds / 60):0}:{seconds % 60:00}" : $"{seconds:0}초";
         }
 
         private void RefreshActions()
@@ -202,6 +168,10 @@ namespace MyFreshMushroom
             var entryArea = exploration.EntryArea;
             exploration.EnterButton.interactable = session.Exploration.CanEnter(entryArea)
                 && entryArea.Definition.HasExplorationMaps;
+            var enterLabel = exploration.EnterButton.GetComponentInChildren<Text>(true);
+            if (enterLabel != null)
+                enterLabel.text = entryArea != null && entryArea.RemainingCooldownSeconds > 0
+                    ? $"탐험가기\n{FormatCooldown(entryArea.RemainingCooldownSeconds)}" : "탐험가기";
             exploration.ReturnButton.gameObject.SetActive(exploring);
             information.gameObject.SetActive(facilitySelected || areaSelected || exploring);
         }
@@ -225,7 +195,7 @@ namespace MyFreshMushroom
             if (selectedFacility?.Definition.Kind != FacilityKind.SpawnWorkbench) return;
             page = PopupPage.Production;
             actions.interactable = false;
-            popup.ShowContent("종균 배양대", productionPanel.Content, productionPanel.PopupHeight);
+            productionPopup.ShowContent("종균 배양대", productionPanel.PopupHeight);
         }
 
         private void OpenRestoration()
@@ -251,8 +221,22 @@ namespace MyFreshMushroom
         private void ClosePopup()
         {
             page = PopupPage.None;
-            popup.Hide();
-            actions.interactable = !forest.IsPresentingRestoration;
+            if (popup != null) popup.Hide();
+            if (productionPopup != null) productionPopup.Hide();
+            if (actions != null) actions.interactable = !forest.IsPresentingRestoration;
+        }
+
+        private void ClosePopupFromButton()
+        {
+            if (page == PopupPage.ExitExploration) session.Exploration.ContinueExploration();
+            else ClosePopup();
+        }
+
+        private void ShowHint()
+        {
+            if (page != PopupPage.ExitExploration || !session.Exploration.IsExitConfirmationOpen) return;
+            hintRevealed = true;
+            RefreshPopup();
         }
 
         private void RefreshFacilityPopup()
@@ -271,6 +255,7 @@ namespace MyFreshMushroom
             {
                 case PopupPage.Facility: return facilityPanel.Status;
                 case PopupPage.Exploration: return exploration.Status;
+                case PopupPage.ExitExploration: return DescribeExit();
                 case PopupPage.Area: return DescribeArea(worldInput.SelectedArea);
                 case PopupPage.Restoration: return DescribeRestoration(worldInput.SelectedArea);
                 case PopupPage.Catalogue: return DescribeCatalogue();
@@ -278,12 +263,42 @@ namespace MyFreshMushroom
             }
         }
 
+        private string DescribeExit()
+        {
+            var current = session.Exploration;
+            string message = current.RemainingCount == 0
+                ? "모든 버섯을 찾았습니다."
+                : $"아직 찾지 못한 버섯이 있습니다.\n남은 채집 대상 {current.RemainingCount}개";
+            message += "\n\n재배지로 돌아갈까요?\n이미 획득한 버섯은 그대로 보유합니다.";
+            if (hintRevealed && current.TryGetRemainingHint(out var hint)) message += $"\n\n힌트\n{hint}";
+            return message;
+        }
+
         private string DescribeArea(ForestAreaState area)
         {
             if (area == null) return "";
             string access = area.IsExplorationUnlocked ? "탐험 개방" : "탐험 잠김";
-            string progress = area.Definition != session.Exploration.FirstArea ? "발견 정보 미등록"
-                : session.Progress.FirstExplorationCollected ? "발견 1/1 · 표고버섯" : "발견 0/1 · ?";
+            if (area.IsExplorationUnlocked && area.RemainingCooldownSeconds > 0)
+                access = $"재탐험 대기 · {FormatCooldown(area.RemainingCooldownSeconds)}";
+            var species = new Dictionary<string, MushroomData>();
+            if (area.Definition == session.Exploration.FirstArea)
+                species.Add(session.Exploration.MushroomId, session.Exploration.FirstMushroom);
+            foreach (var prefab in area.Definition.ExplorationMapPrefabs ?? System.Array.Empty<GameObject>())
+            {
+                if (prefab == null || !prefab.TryGetComponent<ExplorationMap>(out var map) || map.Collectibles == null) continue;
+                foreach (var target in map.Collectibles)
+                    if (target?.Mushroom != null && !string.IsNullOrWhiteSpace(target.Mushroom.Id))
+                        species[target.Mushroom.Id] = target.Mushroom;
+            }
+            int discovered = 0;
+            var names = new StringBuilder();
+            foreach (var mushroom in species.Values)
+            {
+                bool known = session.Progress.IsDiscovered(mushroom.Id);
+                if (known) discovered++;
+                names.AppendLine().Append(known ? mushroom.DisplayName : "?");
+            }
+            string progress = $"발견 {discovered}/{species.Count}{names}";
             int stages = area.Definition.RestorationStages.Count;
             string restoration = stages > 0 ? $"\n복원 {area.CompletedRestorationStages}/{stages}" : "";
             return $"{area.Definition.DisplayName}\n\n{access}{restoration}\n{progress}";
