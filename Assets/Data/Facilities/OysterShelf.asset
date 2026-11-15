@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: OysterShelf
   m_EditorClassIdentifier: MyFreshMushroom.Runtime::MyFreshMushroom.FacilityData
   id: oyster-shelf
-  displayName: 느타리 재배 선반
+  displayName: "\uB290\uD0C0\uB9AC \uC7AC\uBC30 \uC120\uBC18"
   kind: 0
-  footprint: {x: 2, y: 2}
+  footprint: {x: 3, y: 2}
   supportedMushroom: {fileID: 11400000, guid: 530a2652789c4474ba08b84762509a46, type: 2}
   sprite: {fileID: 21300000, guid: 323de1c5070a4c00bb6934a3e73de9ab, type: 3}

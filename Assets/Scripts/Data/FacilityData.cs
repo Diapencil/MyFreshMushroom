@@ -10,7 +10,8 @@ namespace MyFreshMushroom
         [SerializeField] private string id;
         [SerializeField] private string displayName;
         [SerializeField] private FacilityKind kind;
-        [SerializeField] private Vector2Int footprint = new Vector2Int(2, 2);
+        [SerializeField, Tooltip("점유 칸 수: X는 왼쪽 위, Y는 오른쪽 위 방향")]
+        private Vector2Int footprint = new Vector2Int(2, 2);
         [SerializeField] private MushroomData supportedMushroom;
         [SerializeField] private Sprite sprite;
 

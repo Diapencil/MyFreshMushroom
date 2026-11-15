@@ -7,6 +7,35 @@ namespace MyFreshMushroom.Tests
 {
     public sealed class ForestGridTests
     {
+        [TestCase(1f, 0.5f)]
+        [TestCase(2f, 1.5f)]
+        public void PositiveAxesPointUpLeftAndUpRight(float tileWidth, float tileHeight)
+        {
+            var grid = new ForestGrid(16, new Vector2(tileWidth, tileHeight));
+            Vector2 origin = grid.GridToWorld(new Vector2(7, 7));
+            Assert.That(grid.GridToWorld(new Vector2(8, 7)) - origin,
+                Is.EqualTo(new Vector2(-tileWidth * 0.5f, tileHeight * 0.5f)));
+            Assert.That(grid.GridToWorld(new Vector2(7, 8)) - origin,
+                Is.EqualTo(new Vector2(tileWidth * 0.5f, tileHeight * 0.5f)));
+            Assert.That(grid.GridToWorld(Vector2.zero), Is.EqualTo(new Vector2(0, -8 * tileHeight)));
+        }
+
+        [TestCase("Assets/Prefabs/Exploration/SmallForestPathMap.prefab")]
+        [TestCase("Assets/Prefabs/Exploration/StumpForestMap.prefab")]
+        public void ExplorationGridUsesTheSameAxisDirections(string prefabPath)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            var grid = prefab.GetComponentInChildren<Grid>();
+            Assert.That(grid, Is.Not.Null);
+            var forest = new ForestGrid(16, new Vector2(grid.cellSize.x, grid.cellSize.y));
+            Vector3 origin = grid.CellToWorld(Vector3Int.zero);
+            Assert.That((Vector2)(grid.CellToWorld(Vector3Int.right) - origin),
+                Is.EqualTo(forest.GridToWorld(Vector2.right) - forest.GridToWorld(Vector2.zero)));
+            Assert.That((Vector2)(grid.CellToWorld(Vector3Int.up) - origin),
+                Is.EqualTo(forest.GridToWorld(Vector2.up) - forest.GridToWorld(Vector2.zero)));
+        }
+
         [Test]
         public void EveryCellCentreRoundTripsThroughProjection()
         {

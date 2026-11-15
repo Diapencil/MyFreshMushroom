@@ -19,10 +19,11 @@ namespace MyFreshMushroom
             TileSize = tileSize;
         }
 
-        // Integer coordinates identify tile corners. The whole map is centred at (0, 0).
+        // +X points up-left, +Y up-right; integer coordinates identify bottom corners.
+        // The whole map is centred at (0, 0).
         public Vector2 GridToWorld(Vector2 position)
         {
-            return new Vector2((position.x - position.y) * TileSize.x * 0.5f,
+            return new Vector2((position.y - position.x) * TileSize.x * 0.5f,
                 (position.x + position.y - Size) * TileSize.y * 0.5f);
         }
 
@@ -38,8 +39,8 @@ namespace MyFreshMushroom
                 return false;
             float sum = position.y * 2 / TileSize.y + Size;
             float difference = position.x * 2 / TileSize.x;
-            float x = (sum + difference) * 0.5f;
-            float y = (sum - difference) * 0.5f;
+            float x = (sum - difference) * 0.5f;
+            float y = (sum + difference) * 0.5f;
             if (x < 0 || y < 0 || x >= Size || y >= Size)
                 return false;
             cell = new Vector2Int(Mathf.FloorToInt(x), Mathf.FloorToInt(y));
