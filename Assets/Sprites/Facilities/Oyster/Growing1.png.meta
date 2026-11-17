@@ -1,0 +1,858 @@
+fileFormatVersion: 2
+guid: 1950fe7faec8e79438fb8b34d36a17c6
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -4998076352985516974
+    second: Growing1_0
+  - first:
+      213: 557633266181524265
+    second: Growing1_1
+  - first:
+      213: -1764394091537357558
+    second: Growing1_2
+  - first:
+      213: -8334896214927354963
+    second: Growing1_3
+  - first:
+      213: -5422707552457960740
+    second: Growing1_4
+  - first:
+      213: 2788409459074339949
+    second: Growing1_5
+  - first:
+      213: 2664483162224777423
+    second: Growing1_6
+  - first:
+      213: 3051839095855427318
+    second: Growing1_7
+  - first:
+      213: 5506231858169229729
+    second: Growing1_8
+  - first:
+      213: 1604718744681720787
+    second: Growing1_9
+  - first:
+      213: 6320163510264693817
+    second: Growing1_10
+  - first:
+      213: 5912595402307781554
+    second: Growing1_11
+  - first:
+      213: 8834912019273054195
+    second: Growing1_12
+  - first:
+      213: 5283275963343542094
+    second: Growing1_13
+  - first:
+      213: -425565389264240282
+    second: Growing1_14
+  - first:
+      213: 2908227938332451395
+    second: Growing1_15
+  - first:
+      213: 258410938951527302
+    second: Growing1_16
+  - first:
+      213: -138787318786902399
+    second: Growing1_17
+  - first:
+      213: 5266556618272468031
+    second: Growing1_18
+  - first:
+      213: -1151161955930750419
+    second: Growing1_19
+  - first:
+      213: 1140674359620749326
+    second: Growing1_20
+  - first:
+      213: 5544028639057212353
+    second: Growing1_21
+  - first:
+      213: -8296538555056837592
+    second: Growing1_22
+  - first:
+      213: 7038493919035635141
+    second: Growing1_23
+  - first:
+      213: -7679789854170126415
+    second: Growing1_24
+  - first:
+      213: -7408523588476611106
+    second: Growing1_25
+  - first:
+      213: -1615924097854839835
+    second: Growing1_26
+  - first:
+      213: 8920409505819618028
+    second: Growing1_27
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 9
+  spritePivot: {x: 0.455, y: 0.375}
+  spritePixelsToUnits: 190
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Growing1_0
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 379
+        width: 46
+        height: 50
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 254b404b90443aab0800000000000000
+      internalID: -4998076352985516974
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_1
+      rect:
+        serializedVersion: 2
+        x: 246
+        y: 425
+        width: 61
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 92bc0b9408c1db700800000000000000
+      internalID: 557633266181524265
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_2
+      rect:
+        serializedVersion: 2
+        x: 328
+        y: 386
+        width: 41
+        height: 41
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a052e120cec9387e0800000000000000
+      internalID: -1764394091537357558
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_3
+      rect:
+        serializedVersion: 2
+        x: 367
+        y: 406
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da3d18d7d00845c80800000000000000
+      internalID: -8334896214927354963
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_4
+      rect:
+        serializedVersion: 2
+        x: 246
+        y: 345
+        width: 53
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd25ae6363caeb4b0800000000000000
+      internalID: -5422707552457960740
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_5
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 378
+        width: 12
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d64177021ab62b620800000000000000
+      internalID: 2788409459074339949
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_6
+      rect:
+        serializedVersion: 2
+        x: 398
+        y: 332
+        width: 74
+        height: 62
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fc8da6aa1552af420800000000000000
+      internalID: 2664483162224777423
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_7
+      rect:
+        serializedVersion: 2
+        x: 78
+        y: 304
+        width: 16
+        height: 40
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6feac140d7f4a5a20800000000000000
+      internalID: 3051839095855427318
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_8
+      rect:
+        serializedVersion: 2
+        x: 109
+        y: 307
+        width: 88
+        height: 57
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a1bd15a3b01a6c40800000000000000
+      internalID: 5506231858169229729
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_9
+      rect:
+        serializedVersion: 2
+        x: 203
+        y: 254
+        width: 58
+        height: 83
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3db2a25323b154610800000000000000
+      internalID: 1604718744681720787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_10
+      rect:
+        serializedVersion: 2
+        x: 323
+        y: 308
+        width: 65
+        height: 51
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 93486b71a3bb5b750800000000000000
+      internalID: 6320163510264693817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_11
+      rect:
+        serializedVersion: 2
+        x: 431
+        y: 316
+        width: 23
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b3c92f2132cd0250800000000000000
+      internalID: 5912595402307781554
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_12
+      rect:
+        serializedVersion: 2
+        x: 446
+        y: 277
+        width: 85
+        height: 54
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f779921ca9eb9a70800000000000000
+      internalID: 8834912019273054195
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_13
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 191
+        width: 45
+        height: 120
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e4793752f77f15940800000000000000
+      internalID: 5283275963343542094
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_14
+      rect:
+        serializedVersion: 2
+        x: 162
+        y: 272
+        width: 23
+        height: 40
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 66144308886181af0800000000000000
+      internalID: -425565389264240282
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_15
+      rect:
+        serializedVersion: 2
+        x: 243
+        y: 206
+        width: 96
+        height: 77
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3422c26c6e91c5820800000000000000
+      internalID: 2908227938332451395
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_16
+      rect:
+        serializedVersion: 2
+        x: 261
+        y: 275
+        width: 13
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 68be74e316f069300800000000000000
+      internalID: 258410938951527302
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_17
+      rect:
+        serializedVersion: 2
+        x: 309
+        y: 284
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 186b06c3bade21ef0800000000000000
+      internalID: -138787318786902399
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_18
+      rect:
+        serializedVersion: 2
+        x: 363
+        y: 277
+        width: 10
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3cec954751961940800000000000000
+      internalID: 5266556618272468031
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_19
+      rect:
+        serializedVersion: 2
+        x: 368
+        y: 252
+        width: 49
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d22cdc9dc404600f0800000000000000
+      internalID: -1151161955930750419
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_20
+      rect:
+        serializedVersion: 2
+        x: 156
+        y: 251
+        width: 13
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e084799594d74df00800000000000000
+      internalID: 1140674359620749326
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_21
+      rect:
+        serializedVersion: 2
+        x: 159
+        y: 261
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c3f8977ca850fc40800000000000000
+      internalID: 5544028639057212353
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_22
+      rect:
+        serializedVersion: 2
+        x: 433
+        y: 191
+        width: 55
+        height: 71
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82c21802426ccdc80800000000000000
+      internalID: -8296538555056837592
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_23
+      rect:
+        serializedVersion: 2
+        x: 152
+        y: 229
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c5bdd58de0cda160800000000000000
+      internalID: 7038493919035635141
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_24
+      rect:
+        serializedVersion: 2
+        x: 308
+        y: 229
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b76a8021d7eb6590800000000000000
+      internalID: -7679789854170126415
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_25
+      rect:
+        serializedVersion: 2
+        x: 338
+        y: 190
+        width: 32
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed5dfbe5c03af2990800000000000000
+      internalID: -7408523588476611106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_26
+      rect:
+        serializedVersion: 2
+        x: 374
+        y: 209
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e36e5338951399e0800000000000000
+      internalID: -1615924097854839835
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Growing1_27
+      rect:
+        serializedVersion: 2
+        x: 508
+        y: 180
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cea6565ee29abcb70800000000000000
+      internalID: 8920409505819618028
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Growing1_0: -4998076352985516974
+      Growing1_1: 557633266181524265
+      Growing1_10: 6320163510264693817
+      Growing1_11: 5912595402307781554
+      Growing1_12: 8834912019273054195
+      Growing1_13: 5283275963343542094
+      Growing1_14: -425565389264240282
+      Growing1_15: 2908227938332451395
+      Growing1_16: 258410938951527302
+      Growing1_17: -138787318786902399
+      Growing1_18: 5266556618272468031
+      Growing1_19: -1151161955930750419
+      Growing1_2: -1764394091537357558
+      Growing1_20: 1140674359620749326
+      Growing1_21: 5544028639057212353
+      Growing1_22: -8296538555056837592
+      Growing1_23: 7038493919035635141
+      Growing1_24: -7679789854170126415
+      Growing1_25: -7408523588476611106
+      Growing1_26: -1615924097854839835
+      Growing1_27: 8920409505819618028
+      Growing1_3: -8334896214927354963
+      Growing1_4: -5422707552457960740
+      Growing1_5: 2788409459074339949
+      Growing1_6: 2664483162224777423
+      Growing1_7: 3051839095855427318
+      Growing1_8: 5506231858169229729
+      Growing1_9: 1604718744681720787
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
