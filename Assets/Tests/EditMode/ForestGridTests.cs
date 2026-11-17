@@ -17,7 +17,9 @@ namespace MyFreshMushroom.Tests
                 Is.EqualTo(new Vector2(-tileWidth * 0.5f, tileHeight * 0.5f)));
             Assert.That(grid.GridToWorld(new Vector2(7, 8)) - origin,
                 Is.EqualTo(new Vector2(tileWidth * 0.5f, tileHeight * 0.5f)));
-            Assert.That(grid.GridToWorld(Vector2.zero), Is.EqualTo(new Vector2(0, -8 * tileHeight)));
+            Assert.That(grid.GridToWorld(Vector2.zero), Is.EqualTo(Vector2.zero));
+            var largerGrid = new ForestGrid(32, new Vector2(tileWidth, tileHeight));
+            Assert.That(largerGrid.GridToWorld(new Vector2(7, 7)), Is.EqualTo(origin));
         }
 
         [TestCase("Assets/Prefabs/Exploration/SmallForestPathMap.prefab")]
@@ -40,20 +42,20 @@ namespace MyFreshMushroom.Tests
         public void EveryCellCentreRoundTripsThroughProjection()
         {
             var grid = new ForestGrid(16, new Vector2(1, 0.5f));
-            for (int x = 0; x < 16; x++)
-            for (int y = 0; y < 16; y++)
+            for (int x = grid.MinCellCoordinate; x < grid.MaxCellCoordinateExclusive; x++)
+            for (int y = grid.MinCellCoordinate; y < grid.MaxCellCoordinateExclusive; y++)
             {
                 var expected = new Vector2Int(x, y);
                 Assert.That(grid.TryWorldToCell(grid.CellCenterToWorld(expected), out var actual), Is.True);
                 Assert.That(actual, Is.EqualTo(expected));
             }
-            Assert.That(grid.GridToWorld(new Vector2(8, 8)), Is.EqualTo(Vector2.zero));
+            Assert.That(grid.GridToWorld(Vector2.zero), Is.EqualTo(Vector2.zero));
         }
 
-        [TestCase(-0.01f, 8)]
-        [TestCase(8, -0.01f)]
-        [TestCase(16, 8)]
-        [TestCase(8, 16)]
+        [TestCase(-8.01f, 0)]
+        [TestCase(0, -8.01f)]
+        [TestCase(8, 0)]
+        [TestCase(0, 8)]
         public void OutsideAndExclusiveUpperEdgesAreRejected(float x, float y)
         {
             var grid = new ForestGrid(16, new Vector2(1, 0.5f));
@@ -64,9 +66,10 @@ namespace MyFreshMushroom.Tests
         public void FootprintMustFitEntirelyAndDoesNotOverflow()
         {
             var grid = new ForestGrid(16, new Vector2(1, 0.5f));
-            Assert.That(grid.ContainsFootprint(new Vector2Int(14, 14), new Vector2Int(2, 2)), Is.True);
-            Assert.That(grid.ContainsFootprint(new Vector2Int(15, 14), new Vector2Int(2, 2)), Is.False);
-            Assert.That(grid.ContainsFootprint(new Vector2Int(-1, 0), Vector2Int.one), Is.False);
+            Assert.That(grid.ContainsFootprint(new Vector2Int(6, 6), new Vector2Int(2, 2)), Is.True);
+            Assert.That(grid.ContainsFootprint(new Vector2Int(7, 6), new Vector2Int(2, 2)), Is.False);
+            Assert.That(grid.ContainsFootprint(new Vector2Int(-8, -8), Vector2Int.one), Is.True);
+            Assert.That(grid.ContainsFootprint(new Vector2Int(-9, 0), Vector2Int.one), Is.False);
             Assert.That(grid.ContainsFootprint(Vector2Int.zero, Vector2Int.zero), Is.False);
             Assert.That(grid.ContainsFootprint(Vector2Int.one, new Vector2Int(int.MaxValue, 1)), Is.False);
         }
@@ -86,7 +89,7 @@ namespace MyFreshMushroom.Tests
         {
             var data = AssetDatabase.LoadAssetAtPath<FacilityData>("Assets/Data/Facilities/OysterShelf.asset");
             Assert.That(data != null, Is.True);
-            var shelf = new FacilityState("shelf", data, new Vector2Int(7, 7));
+            var shelf = new FacilityState("shelf", data, new Vector2Int(-1, -1));
             var other = new FacilityState("other", data, Vector2Int.zero);
             var selection = new FacilitySelection(new[] { shelf });
             int notifications = 0;
@@ -95,8 +98,8 @@ namespace MyFreshMushroom.Tests
             Assert.That(selection.Select(shelf), Is.True);
             Assert.That(selection.Select(shelf), Is.False);
             Assert.That(selection.Selected, Is.SameAs(shelf));
-            Assert.That(shelf.ContainsCell(new Vector2Int(8, 8)), Is.True);
-            Assert.That(shelf.ContainsCell(new Vector2Int(9, 8)), Is.False);
+            Assert.That(shelf.ContainsCell(Vector2Int.zero), Is.True);
+            Assert.That(shelf.ContainsCell(new Vector2Int(1, 0)), Is.False);
             Assert.That(selection.Select(null), Is.True);
             Assert.That(selection.Selected, Is.Null);
             Assert.That(notifications, Is.EqualTo(2));

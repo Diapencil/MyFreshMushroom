@@ -11,7 +11,7 @@ namespace MyFreshMushroom
         [SerializeField, Min(0)] private int startingMushroomCount;
         [SerializeField, Min(0)] private int startingSpawnCount = 3;
         [SerializeField] private ForestGridView forest;
-        [SerializeField] private SpawnRecipeData[] spawnRecipes;
+        [SerializeField] private SpawnRecipeDatabase spawnRecipeDatabase;
         [SerializeField] private bool enableTutorial = true;
         [SerializeField] private string tutorialShelfId = "starting-oyster-shelf";
         [SerializeField] private MushroomData firstExplorationMushroom;
@@ -54,6 +54,13 @@ namespace MyFreshMushroom
             if (IsInitialized)
                 return true;
 
+            if (spawnRecipeDatabase == null)
+            {
+                Debug.LogError("GameManager requires a spawn recipe database.", this);
+                return false;
+            }
+            var spawnRecipes = spawnRecipeDatabase.Recipes;
+
             if (forest == null || startingMushroom == null || firstExplorationMushroom == null
                 || string.IsNullOrWhiteSpace(firstExplorationMushroom.Id) || firstExplorationReward <= 0
                 || firstExplorationMushroom.Id == startingMushroom.Id || string.IsNullOrWhiteSpace(startingMushroom.Id)
@@ -66,7 +73,7 @@ namespace MyFreshMushroom
 
             var mushroomIds = new HashSet<string> { startingMushroom.Id };
             var mushrooms = new List<MushroomData> { startingMushroom };
-            foreach (var recipe in spawnRecipes ?? System.Array.Empty<SpawnRecipeData>())
+            foreach (var recipe in spawnRecipes)
                 if (recipe != null && recipe.IsValid && mushroomIds.Add(recipe.Mushroom.Id)) mushrooms.Add(recipe.Mushroom);
             if (mushroomIds.Add(firstExplorationMushroom.Id)) mushrooms.Add(firstExplorationMushroom);
             foreach (var mushroom in additionalMushrooms ?? System.Array.Empty<MushroomData>())
@@ -106,7 +113,7 @@ namespace MyFreshMushroom
                         && facility.Definition.SupportedMushroom == startingMushroom) shelf = facility;
                     if (facility.Definition.Kind == FacilityKind.SpawnWorkbench) workbench = facility;
                 }
-                foreach (var recipe in spawnRecipes ?? System.Array.Empty<SpawnRecipeData>())
+                foreach (var recipe in spawnRecipes)
                     if (recipe != null && recipe.Mushroom == startingMushroom) tutorialRecipe = recipe;
                 if (shelf == null || workbench == null || tutorialRecipe == null)
                 {
@@ -116,7 +123,7 @@ namespace MyFreshMushroom
                 Tutorial = new TutorialManager(progress, shelf, workbench, tutorialRecipe);
             }
             Cultivation = new CultivationService(inventory, facilities, Tutorial);
-            SpawnProduction = new SpawnProductionService(inventory, progress, spawnRecipes ?? System.Array.Empty<SpawnRecipeData>(), Tutorial);
+            SpawnProduction = new SpawnProductionService(inventory, progress, spawnRecipes, Tutorial);
             Tutorial?.Bind(Cultivation, SpawnProduction);
             Exploration = new ExplorationService(inventory, progress, firstExplorationArea,
                 firstExplorationMushroom.Id, mushrooms, areaStates, Tutorial);

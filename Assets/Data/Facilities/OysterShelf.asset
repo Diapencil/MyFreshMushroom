@@ -17,4 +17,4 @@ MonoBehaviour:
   kind: 0
   footprint: {x: 3, y: 2}
   supportedMushroom: {fileID: 11400000, guid: 530a2652789c4474ba08b84762509a46, type: 2}
-  sprite: {fileID: 21300000, guid: 323de1c5070a4c00bb6934a3e73de9ab, type: 3}
+  sprite: {fileID: 4109729354716508009, guid: aa7e417e207a44f4c8fd96629a7371b6, type: 3}

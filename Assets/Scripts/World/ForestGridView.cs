@@ -95,11 +95,12 @@ namespace MyFreshMushroom
             }
 
             Grid = grid;
-            MapBounds = new Bounds(transform.position, tileSize * size);
+            float centreCoordinate = grid.MinCellCoordinate + size * 0.5f;
+            MapBounds = new Bounds(transform.TransformPoint(grid.GridToWorld(Vector2.one * centreCoordinate)), tileSize * size);
             var ground = new GameObject("Ground").transform;
             ground.SetParent(transform, false);
-            for (int x = 0; x < size; x++)
-            for (int y = 0; y < size; y++)
+            for (int x = grid.MinCellCoordinate; x < grid.MaxCellCoordinateExclusive; x++)
+            for (int y = grid.MinCellCoordinate; y < grid.MaxCellCoordinateExclusive; y++)
             {
                 var tile = new GameObject($"Tile {x},{y}", typeof(SpriteRenderer));
                 tile.transform.SetParent(ground, false);

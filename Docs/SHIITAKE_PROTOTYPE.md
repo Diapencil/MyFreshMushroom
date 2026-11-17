@@ -15,9 +15,9 @@
 
 - `Assets/Data/Mushrooms/ShiitakeMushroom.asset`: 성장 시간·수확량·4단계 그림.
 - `Assets/Data/Facilities/ShiitakeLog.asset`: 2×1 통나무 시설, 표고 정의 및 기존 임시 통나무 그림 연결.
-- `Assets/Data/SpawnRecipes/ShiitakeSpawnRecipe.asset`: 표고 3개 → 종균 3개.
+- `Assets/Data/SpawnRecipes/SpawnRecipeDatabase.asset`: `Recipes` 목록의 표고 항목에서 표고 3개 → 종균 3개 설정.
 - `Assets/Art/Prototype/ShiitakeGrowth`: 통나무 그림과 같은 크기·피벗의 성장 오버레이.
-- `Assets/Scenes/SampleScene.unity`: 초기 통나무 시설(그리드 원점 11,6), 배양대 레시피 등록.
+- `Assets/Scenes/SampleScene.unity`: 초기 통나무 시설(점유 시작 셀 `(3, -2)`), 배양대 레시피 등록.
 - `FacilityPanel`: 재배 시설 공통 문구와 미발견 안내.
 - `ForestInteractionTests`: 초기 시설 수를 3개로 갱신.
 

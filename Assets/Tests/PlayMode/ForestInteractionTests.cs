@@ -144,7 +144,7 @@ namespace MyFreshMushroom.Tests
                 StringAssert.Contains(view.State.Definition.DisplayName, panel.Status);
                 Assert.That(view.GetComponent<LineRenderer>().enabled, Is.True);
             }
-            var empty = forest.Grid.CellCenterToWorld(Vector2Int.zero);
+            var empty = forest.Grid.CellCenterToWorld(new Vector2Int(-8, -8));
             Assert.That(input.TrySelectAtScreenPosition(camera.WorldToScreenPoint(empty)), Is.True);
             Assert.That(forest.Selection.Selected, Is.Null);
             StringAssert.Contains("시설 선택", panel.Status);

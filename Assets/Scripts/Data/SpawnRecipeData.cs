@@ -1,9 +1,10 @@
+using System;
 using UnityEngine;
 
 namespace MyFreshMushroom
 {
-    [CreateAssetMenu(menuName = "My Fresh Mushroom/Spawn Recipe", fileName = "SpawnRecipe")]
-    public sealed class SpawnRecipeData : ScriptableObject
+    [Serializable]
+    public sealed class SpawnRecipeData
     {
         [SerializeField] private MushroomData mushroom;
         [SerializeField, Min(1)] private int mushroomCost = 2;
