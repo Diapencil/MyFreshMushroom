@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: ShiitakeLog
   m_EditorClassIdentifier: MyFreshMushroom.Runtime::MyFreshMushroom.FacilityData
   id: shiitake-log
-  displayName: 표고 통나무 재배대
+  displayName: "\uD45C\uACE0 \uD1B5\uB098\uBB34 \uC7AC\uBC30\uB300"
   kind: 0
-  footprint: {x: 2, y: 1}
+  footprint: {x: 3, y: 2}
   supportedMushroom: {fileID: 11400000, guid: fe429714500746a7bdb3a66f1537d784, type: 2}
-  sprite: {fileID: 21300000, guid: 275dd8dbdb87496eb4b224d7c707ac18, type: 3}
+  sprite: {fileID: 21300000, guid: 8be4e8e629b6da44a8f58ef0bdcf237a, type: 3}
