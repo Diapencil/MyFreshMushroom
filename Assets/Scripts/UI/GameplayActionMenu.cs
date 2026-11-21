@@ -255,7 +255,7 @@ namespace MyFreshMushroom
             {
                 case PopupPage.Facility: return facilityPanel.Status;
                 case PopupPage.Exploration: return exploration.Status;
-                case PopupPage.ExitExploration: return DescribeExit();
+                case PopupPage.ExitExploration: return DescribeExit();  
                 case PopupPage.Area: return DescribeArea(worldInput.SelectedArea);
                 case PopupPage.Restoration: return DescribeRestoration(worldInput.SelectedArea);
                 case PopupPage.Catalogue: return DescribeCatalogue();

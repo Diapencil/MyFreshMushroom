@@ -15,4 +15,6 @@ MonoBehaviour:
   id: button
   displayName: 양송이버섯
   icon: {fileID: 21300000, guid: 396a8b84d6f246948eb3b26b6583378f, type: 3}
+  baseHarvestYield: 3
+  wateredHarvestYield: 5
   growthStageSprites: []

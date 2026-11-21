@@ -1,0 +1,858 @@
+fileFormatVersion: 2
+guid: dc7b534e98033aa47b76da0ea7c2ae06
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -8821054459479441682
+    second: shiitake-stage-2_0
+  - first:
+      213: 2458904264688740914
+    second: shiitake-stage-2_1
+  - first:
+      213: 6655676979747759316
+    second: shiitake-stage-2_2
+  - first:
+      213: -4693561201643196559
+    second: shiitake-stage-2_3
+  - first:
+      213: 6894729797924142861
+    second: shiitake-stage-2_4
+  - first:
+      213: -7659279498278115654
+    second: shiitake-stage-2_5
+  - first:
+      213: -3598150979985129171
+    second: shiitake-stage-2_6
+  - first:
+      213: 1445957478532443658
+    second: shiitake-stage-2_7
+  - first:
+      213: -2214096747147261886
+    second: shiitake-stage-2_8
+  - first:
+      213: -8676666381891042101
+    second: shiitake-stage-2_9
+  - first:
+      213: -4596485862927167692
+    second: shiitake-stage-2_10
+  - first:
+      213: -2125986676560344217
+    second: shiitake-stage-2_11
+  - first:
+      213: 2865293461719335636
+    second: shiitake-stage-2_12
+  - first:
+      213: 8782460953658957182
+    second: shiitake-stage-2_13
+  - first:
+      213: -4575579873402208550
+    second: shiitake-stage-2_14
+  - first:
+      213: 4376904896912490660
+    second: shiitake-stage-2_15
+  - first:
+      213: -667760595247020117
+    second: shiitake-stage-2_16
+  - first:
+      213: -2860694222888620163
+    second: shiitake-stage-2_17
+  - first:
+      213: -3209666633648786092
+    second: shiitake-stage-2_18
+  - first:
+      213: -6152017886754470229
+    second: shiitake-stage-2_19
+  - first:
+      213: -6473453116344354396
+    second: shiitake-stage-2_20
+  - first:
+      213: -4068122700334285977
+    second: shiitake-stage-2_21
+  - first:
+      213: -8987221312582111496
+    second: shiitake-stage-2_22
+  - first:
+      213: 8648612738556998646
+    second: shiitake-stage-2_23
+  - first:
+      213: 7914755692700557454
+    second: shiitake-stage-2_24
+  - first:
+      213: 8702810545492664004
+    second: shiitake-stage-2_25
+  - first:
+      213: -1567357888632950790
+    second: shiitake-stage-2_26
+  - first:
+      213: 6633668118867767752
+    second: shiitake-stage-2_27
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 9
+  spritePivot: {x: 0.52, y: 0.34}
+  spritePixelsToUnits: 520
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: shiitake-stage-2_0
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 28
+        width: 308
+        height: 524
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eee3a5e74b1559580800000000000000
+      internalID: -8821054459479441682
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_1
+      rect:
+        serializedVersion: 2
+        x: 93
+        y: 642
+        width: 364
+        height: 333
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 23a2771a668cf1220800000000000000
+      internalID: 2458904264688740914
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_2
+      rect:
+        serializedVersion: 2
+        x: 129
+        y: 587
+        width: 26
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d42c9523f6bd5c50800000000000000
+      internalID: 6655676979747759316
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_3
+      rect:
+        serializedVersion: 2
+        x: 157
+        y: 136
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17f608464fe1ddeb0800000000000000
+      internalID: -4693561201643196559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_4
+      rect:
+        serializedVersion: 2
+        x: 161
+        y: 122
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d0fb19ba8300faf50800000000000000
+      internalID: 6894729797924142861
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_5
+      rect:
+        serializedVersion: 2
+        x: 291
+        y: 610
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab663bd70e5c4b590800000000000000
+      internalID: -7659279498278115654
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_6
+      rect:
+        serializedVersion: 2
+        x: 383
+        y: 44
+        width: 40
+        height: 68
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d2143cd5fbcc01ec0800000000000000
+      internalID: -3598150979985129171
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_7
+      rect:
+        serializedVersion: 2
+        x: 431
+        y: 0
+        width: 110
+        height: 112
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a0eee3c6aa2111410800000000000000
+      internalID: 1445957478532443658
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_8
+      rect:
+        serializedVersion: 2
+        x: 467
+        y: 297
+        width: 146
+        height: 182
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 24880ff3db2f541e0800000000000000
+      internalID: -2214096747147261886
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_9
+      rect:
+        serializedVersion: 2
+        x: 479
+        y: 542
+        width: 106
+        height: 105
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc48fc885e9469780800000000000000
+      internalID: -8676666381891042101
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_10
+      rect:
+        serializedVersion: 2
+        x: 625
+        y: 696
+        width: 150
+        height: 91
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43f0f1df5700630c0800000000000000
+      internalID: -4596485862927167692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_11
+      rect:
+        serializedVersion: 2
+        x: 729
+        y: 48
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76b4862b16afe72e0800000000000000
+      internalID: -2125986676560344217
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_12
+      rect:
+        serializedVersion: 2
+        x: 753
+        y: 75
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d2c703f83193c720800000000000000
+      internalID: 2865293461719335636
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_13
+      rect:
+        serializedVersion: 2
+        x: 757
+        y: 647
+        width: 10
+        height: 52
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e7d9494b4b191e970800000000000000
+      internalID: 8782460953658957182
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_14
+      rect:
+        serializedVersion: 2
+        x: 757
+        y: 481
+        width: 82
+        height: 75
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ade3f6cf8564080c0800000000000000
+      internalID: -4575579873402208550
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_15
+      rect:
+        serializedVersion: 2
+        x: 757
+        y: 252
+        width: 134
+        height: 109
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a0032c50d3edbc30800000000000000
+      internalID: 4376904896912490660
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_16
+      rect:
+        serializedVersion: 2
+        x: 851
+        y: 0
+        width: 556
+        height: 951
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ba74c4dc643abb6f0800000000000000
+      internalID: -667760595247020117
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_17
+      rect:
+        serializedVersion: 2
+        x: 895
+        y: 402
+        width: 76
+        height: 83
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d7f26b9c2c5cc48d0800000000000000
+      internalID: -2860694222888620163
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_18
+      rect:
+        serializedVersion: 2
+        x: 915
+        y: 642
+        width: 16
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 455b0f5c339f473d0800000000000000
+      internalID: -3209666633648786092
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_19
+      rect:
+        serializedVersion: 2
+        x: 927
+        y: 610
+        width: 72
+        height: 69
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ba68628a354af9aa0800000000000000
+      internalID: -6152017886754470229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_20
+      rect:
+        serializedVersion: 2
+        x: 1015
+        y: 28
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a9362240bca926a0800000000000000
+      internalID: -6473453116344354396
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_21
+      rect:
+        serializedVersion: 2
+        x: 1015
+        y: 18
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76b3fd735ff1b87c0800000000000000
+      internalID: -4068122700334285977
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_22
+      rect:
+        serializedVersion: 2
+        x: 1027
+        y: 24
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8fe29b125d9f64380800000000000000
+      internalID: -8987221312582111496
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_23
+      rect:
+        serializedVersion: 2
+        x: 1059
+        y: 26
+        width: 18
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f3bb91a67b060870800000000000000
+      internalID: 8648612738556998646
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_24
+      rect:
+        serializedVersion: 2
+        x: 1081
+        y: 30
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e80ea6b4e5cd6dd60800000000000000
+      internalID: 7914755692700557454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_25
+      rect:
+        serializedVersion: 2
+        x: 1081
+        y: 17
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ce1d97e41896c870800000000000000
+      internalID: 8702810545492664004
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_26
+      rect:
+        serializedVersion: 2
+        x: 1157
+        y: 234
+        width: 12
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aff6024fd40af3ae0800000000000000
+      internalID: -1567357888632950790
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: shiitake-stage-2_27
+      rect:
+        serializedVersion: 2
+        x: 1177
+        y: 234
+        width: 8
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c172f6e1068f0c50800000000000000
+      internalID: 6633668118867767752
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      shiitake-stage-2_0: -8821054459479441682
+      shiitake-stage-2_1: 2458904264688740914
+      shiitake-stage-2_10: -4596485862927167692
+      shiitake-stage-2_11: -2125986676560344217
+      shiitake-stage-2_12: 2865293461719335636
+      shiitake-stage-2_13: 8782460953658957182
+      shiitake-stage-2_14: -4575579873402208550
+      shiitake-stage-2_15: 4376904896912490660
+      shiitake-stage-2_16: -667760595247020117
+      shiitake-stage-2_17: -2860694222888620163
+      shiitake-stage-2_18: -3209666633648786092
+      shiitake-stage-2_19: -6152017886754470229
+      shiitake-stage-2_2: 6655676979747759316
+      shiitake-stage-2_20: -6473453116344354396
+      shiitake-stage-2_21: -4068122700334285977
+      shiitake-stage-2_22: -8987221312582111496
+      shiitake-stage-2_23: 8648612738556998646
+      shiitake-stage-2_24: 7914755692700557454
+      shiitake-stage-2_25: 8702810545492664004
+      shiitake-stage-2_26: -1567357888632950790
+      shiitake-stage-2_27: 6633668118867767752
+      shiitake-stage-2_3: -4693561201643196559
+      shiitake-stage-2_4: 6894729797924142861
+      shiitake-stage-2_5: -7659279498278115654
+      shiitake-stage-2_6: -3598150979985129171
+      shiitake-stage-2_7: 1445957478532443658
+      shiitake-stage-2_8: -2214096747147261886
+      shiitake-stage-2_9: -8676666381891042101
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

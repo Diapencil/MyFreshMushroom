@@ -17,7 +17,7 @@ MonoBehaviour:
   icon: {fileID: 0}
   growthDurationSeconds: 9
   baseHarvestYield: 3
-  wateringYieldMultiplier: 1.5
+  wateredHarvestYield: 5
   growthStageWeights: {x: 1, y: 1, z: 1}
   growthStageSprites:
   - {fileID: 21300000, guid: 1950fe7faec8e79438fb8b34d36a17c6, type: 3}

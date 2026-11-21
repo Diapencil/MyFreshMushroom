@@ -9,8 +9,10 @@ namespace MyFreshMushroom
         [SerializeField] private string displayName;
         [SerializeField] private Sprite icon;
         [SerializeField, Min(0.1f)] private float growthDurationSeconds = 120;
-        [SerializeField, Min(1)] private int baseHarvestYield = 3;
-        [SerializeField, Min(1)] private float wateringYieldMultiplier = 1.5f;
+        [SerializeField, Min(1), Tooltip("물을 주지 않았을 때의 최종 수확 개수")]
+        private int baseHarvestYield = 3;
+        [SerializeField, Min(1), Tooltip("물을 줬을 때의 최종 수확 개수 (기본 수확량 이상)")]
+        private int wateredHarvestYield = 5;
         [SerializeField] private Vector3 growthStageWeights = Vector3.one;
         [SerializeField] private Sprite[] growthStageSprites = new Sprite[4];
 
@@ -19,7 +21,7 @@ namespace MyFreshMushroom
         public Sprite Icon => icon;
         public float GrowthDurationSeconds => growthDurationSeconds;
         public int BaseHarvestYield => baseHarvestYield;
-        public float WateringYieldMultiplier => wateringYieldMultiplier;
+        public int WateredHarvestYield => wateredHarvestYield;
         public Vector3 GrowthStageWeights => growthStageWeights;
 
         public bool HasValidCultivationSettings
@@ -28,8 +30,7 @@ namespace MyFreshMushroom
             {
                 var weights = growthStageWeights;
                 if (!float.IsFinite(growthDurationSeconds) || growthDurationSeconds <= 0 || baseHarvestYield <= 0
-                    || !float.IsFinite(wateringYieldMultiplier) || wateringYieldMultiplier < 1
-                    || System.Math.Ceiling((double)baseHarvestYield * wateringYieldMultiplier) > int.MaxValue
+                    || wateredHarvestYield < baseHarvestYield
                     || !float.IsFinite(weights.x) || !float.IsFinite(weights.y) || !float.IsFinite(weights.z)
                     || weights.x <= 0 || weights.y <= 0 || weights.z <= 0
                     || growthStageSprites == null || growthStageSprites.Length != 4)
