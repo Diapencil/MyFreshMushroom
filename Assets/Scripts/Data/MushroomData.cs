@@ -8,6 +8,7 @@ namespace MyFreshMushroom
         [SerializeField] private string id;
         [SerializeField] private string displayName;
         [SerializeField] private Sprite icon;
+        [SerializeField] private Sprite spawnIcon;
         [SerializeField, Min(0.1f)] private float growthDurationSeconds = 120;
         [SerializeField, Min(1), Tooltip("물을 주지 않았을 때의 최종 수확 개수")]
         private int baseHarvestYield = 3;
@@ -19,6 +20,7 @@ namespace MyFreshMushroom
         public string Id => id;
         public string DisplayName => displayName;
         public Sprite Icon => icon;
+        public Sprite SpawnIcon => spawnIcon;
         public float GrowthDurationSeconds => growthDurationSeconds;
         public int BaseHarvestYield => baseHarvestYield;
         public int WateredHarvestYield => wateredHarvestYield;

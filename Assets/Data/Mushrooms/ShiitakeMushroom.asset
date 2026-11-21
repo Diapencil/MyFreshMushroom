@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: shiitake
   displayName: "\uD45C\uACE0\uBC84\uC12F"
-  icon: {fileID: 21300000, guid: 396a8b84d6f246948eb3b26b6583378f, type: 3}
+  icon: {fileID: 21300000, guid: 3f96a1e460aace64f898422e1b603520, type: 3}
+  spawnIcon: {fileID: 21300000, guid: d1348783ff9f62949971b035e131e55c, type: 3}
   growthDurationSeconds: 9
   baseHarvestYield: 3
   wateredHarvestYield: 5

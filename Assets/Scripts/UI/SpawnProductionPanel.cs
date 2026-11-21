@@ -12,12 +12,18 @@ namespace MyFreshMushroom
         [SerializeField] private RectTransform recipeList;
         [SerializeField] private Button recipeButtonPrefab;
         [SerializeField] private Text detailsText;
+        [SerializeField] private GameObject recipeTotals;
+        [SerializeField] private Image mushroomIcon;
+        [SerializeField] private Image spawnIcon;
+        [SerializeField] private Text mushroomCostText;
+        [SerializeField] private Text spawnOutputText;
+        [SerializeField] private Text ownedText;
         [SerializeField] private Text countText;
         [SerializeField] private Text feedbackText;
         [SerializeField] private Button decreaseButton;
         [SerializeField] private Button increaseButton;
         [SerializeField] private Button produceButton;
-        [SerializeField, Min(1)] private float basePopupHeight = 340;
+        [SerializeField, Min(1)] private float popupHeight = 370;
 
         private readonly KoreanUiFont uiFont = new KoreanUiFont();
         private readonly List<Button> recipeButtons = new List<Button>();
@@ -30,20 +36,14 @@ namespace MyFreshMushroom
         private SpawnProductionService production;
         private TutorialManager tutorial;
         public RectTransform Content => (RectTransform)content.transform;
-        public float PopupHeight
-        {
-            get
-            {
-                float rowHeight = LayoutUtility.GetPreferredHeight((RectTransform)recipeButtonPrefab.transform);
-                float spacing = recipeList.TryGetComponent<VerticalLayoutGroup>(out var layout) ? layout.spacing : 0;
-                return basePopupHeight + (rowHeight + spacing) * Mathf.Max(0, recipeButtons.Count - 1);
-            }
-        }
+        public float PopupHeight => popupHeight;
 
         private void OnEnable()
         {
             if (session == null || forest == null || content == null || recipeList == null || recipeButtonPrefab == null
-                || detailsText == null || countText == null || feedbackText == null
+                || detailsText == null || recipeTotals == null || mushroomIcon == null || spawnIcon == null
+                || mushroomCostText == null || spawnOutputText == null || ownedText == null
+                || countText == null || feedbackText == null
                 || decreaseButton == null || increaseButton == null || produceButton == null)
             {
                 Debug.LogError("SpawnProductionPanel requires all scene references.", this);
@@ -108,8 +108,12 @@ namespace MyFreshMushroom
                 if (!production.IsAvailable(recipe)) continue;
                 var button = Instantiate(recipeButtonPrefab, recipeList);
                 var label = button.GetComponentInChildren<Text>(true);
-                label.text = recipe.Mushroom.DisplayName;
-                uiFont.Apply(label);
+                var icon = button.transform.Find("Icon").GetComponent<Image>();
+                var mushroom = recipe.Mushroom;
+                ApplyIcon(icon, mushroom.Icon);
+                label.text = mushroom.DisplayName;
+                label.enabled = mushroom.Icon == null;
+                if (label.enabled) uiFont.Apply(label);
                 button.onClick.AddListener(() => SelectRecipe(recipe));
                 button.gameObject.SetActive(true);
                 recipeButtons.Add(button);
@@ -137,8 +141,7 @@ namespace MyFreshMushroom
 
         private void Increase()
         {
-            if (!WorkbenchSelected || batches == int.MaxValue
-                || !production.CanChooseBatchCount(selectedRecipe, batches + 1)) return;
+            if (!WorkbenchSelected || !CanIncrease()) return;
             batches++;
             feedback = "";
             Refresh();
@@ -157,28 +160,44 @@ namespace MyFreshMushroom
         private void Refresh()
         {
             if (production == null || !WorkbenchSelected) return;
+            var mushroom = selectedRecipe?.Mushroom;
+            int owned = mushroom == null ? 0 : inventory.State.GetAmounts(mushroom.Id).Mushrooms;
+            if (mushroom != null)
+                batches = Mathf.Min(batches, Mathf.Max(1, owned / selectedRecipe.MushroomCost));
+
             bool valid = production.TryGetTotals(selectedRecipe, batches, out int cost, out int output);
             for (int i = 0; i < recipeButtons.Count; i++)
                 recipeButtons[i].interactable = visibleRecipes[i] != selectedRecipe;
-            countText.text = $"제작 {batches}회";
-            decreaseButton.interactable = selectedRecipe != null && batches > 1;
-            increaseButton.interactable = batches < int.MaxValue
-                && production.CanChooseBatchCount(selectedRecipe, batches + 1);
+            countText.text = valid ? $"{batches}회" : "";
+            decreaseButton.interactable = valid && batches > 1;
+            increaseButton.interactable = CanIncrease();
             produceButton.interactable = valid && production.CanProduce(selectedRecipe, batches);
+            recipeTotals.SetActive(valid);
             if (!valid)
             {
                 detailsText.text = "제작 가능한 버섯이 없습니다.";
+                ownedText.text = "";
                 feedbackText.text = feedback;
                 return;
             }
-            var amounts = inventory.State.GetAmounts(selectedRecipe.Mushroom.Id);
-            detailsText.text = $"{selectedRecipe.Mushroom.DisplayName}\n보유 버섯: {amounts.Mushrooms}개 | 종균: {amounts.Spawn}개\n"
-                + $"1회: 버섯 {selectedRecipe.MushroomCost}개 → 종균 {selectedRecipe.SpawnOutput}개\n"
-                + $"합계: 버섯 {cost}개 → 종균 {output}개";
+            detailsText.text = mushroom.DisplayName;
+            ApplyIcon(mushroomIcon, mushroom.Icon);
+            ApplyIcon(spawnIcon, mushroom.SpawnIcon);
+            mushroomCostText.text = mushroom.Icon == null ? $"버섯 {cost}개" : $"{cost}";
+            spawnOutputText.text = mushroom.SpawnIcon == null ? $"종균 {output}개" : $"{output}";
+            ownedText.text = $"보유 버섯: {owned}개";
             feedbackText.text = feedback.Length > 0 ? feedback
                 : !production.CanChooseBatchCount(selectedRecipe, batches) ? "튜토리얼 안내 순서대로 진행해 주세요."
-                : amounts.Mushrooms < cost ? "버섯이 부족합니다."
+                : owned < cost ? "버섯이 부족합니다."
                 : !produceButton.interactable ? "종균 수량 한도를 초과합니다." : "";
+        }
+
+        private bool CanIncrease() => batches < int.MaxValue && production.CanProduce(selectedRecipe, batches + 1);
+
+        private static void ApplyIcon(Image image, Sprite sprite)
+        {
+            image.sprite = sprite;
+            image.enabled = sprite != null;
         }
 
         private void OnDestroy() => uiFont.Dispose();

@@ -1,34 +1,44 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Text;
 
 namespace MyFreshMushroom
 {
     [DisallowMultipleComponent]
     public sealed class InventoryPanel : MonoBehaviour
     {
+        [Serializable]
+        private sealed class MushroomColumn
+        {
+            public MushroomData mushroom;
+            public GameObject root;
+            public Image mushroomIcon;
+            public Image spawnIcon;
+            public Text mushroomQuantity;
+            public Text spawnQuantity;
+        }
+
         [SerializeField] private GameManager session;
-        [SerializeField] private Text quantitiesText;
+        [SerializeField] private MushroomColumn[] columns = Array.Empty<MushroomColumn>();
+        [SerializeField, Min(0)] private float backgroundRightPadding = 5f;
 
         private InventoryService inventory;
-        private readonly KoreanUiFont uiFont = new KoreanUiFont();
 
         private void OnEnable()
         {
-            if (session == null || quantitiesText == null)
+            if (session == null)
             {
-                Debug.LogError("InventoryPanel requires a session and a quantity text reference.", this);
+                Debug.LogError("InventoryPanel requires a session reference.", this);
                 return;
             }
 
-            uiFont.Apply(quantitiesText);
             if (!session.Initialize())
                 return;
 
             inventory = session.Inventory;
             inventory.Changed += Refresh;
-            session.Progress.DiscoveryChanged += Refresh;
-            Refresh();
+            session.Progress.DiscoveryChanged += RefreshDiscovery;
+            RefreshDiscovery();
         }
 
         private void OnDisable()
@@ -36,25 +46,48 @@ namespace MyFreshMushroom
             if (inventory != null)
             {
                 inventory.Changed -= Refresh;
-                session.Progress.DiscoveryChanged -= Refresh;
+                session.Progress.DiscoveryChanged -= RefreshDiscovery;
             }
             inventory = null;
         }
 
-        private void Refresh()
+        private void RefreshDiscovery()
         {
-            var text = new StringBuilder();
-            foreach (var mushroom in session.Mushrooms)
+            float backgroundWidth = 0f;
+            foreach (var column in columns)
             {
-                if (!session.Progress.IsDiscovered(mushroom.Id)) continue;
-                if (text.Length > 0) text.AppendLine();
-                var amounts = inventory.State.GetAmounts(mushroom.Id);
-                text.Append(mushroom.DisplayName).Append('\n').Append("버섯: ").Append(amounts.Mushrooms)
-                    .Append("개    종균: ").Append(amounts.Spawn).Append('개');
+                string id = column.mushroom.Id;
+                bool visible = inventory.State.TryGetAmounts(id, out _)
+                    && session.Progress.IsDiscovered(id);
+                column.root.SetActive(visible);
+                if (visible)
+                {
+                    var columnRect = (RectTransform)column.root.transform;
+                    backgroundWidth = Mathf.Max(backgroundWidth, columnRect.offsetMax.x + backgroundRightPadding);
+                    ApplyIcon(column.mushroomIcon, column.mushroom.Icon);
+                    ApplyIcon(column.spawnIcon, column.mushroom.SpawnIcon);
+                }
             }
-            quantitiesText.text = text.ToString();
+            ((RectTransform)transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, backgroundWidth);
+            Refresh();
         }
 
-        private void OnDestroy() => uiFont.Dispose();
+        private static void ApplyIcon(Image image, Sprite sprite)
+        {
+            image.sprite = sprite;
+            image.enabled = sprite != null;
+            image.SetNativeSize();
+        }
+
+        private void Refresh()
+        {
+            foreach (var column in columns)
+            {
+                if (!column.root.activeSelf) continue;
+                var amounts = inventory.State.GetAmounts(column.mushroom.Id);
+                column.mushroomQuantity.text = amounts.Mushrooms.ToString();
+                column.spawnQuantity.text = amounts.Spawn.ToString();
+            }
+        }
     }
 }

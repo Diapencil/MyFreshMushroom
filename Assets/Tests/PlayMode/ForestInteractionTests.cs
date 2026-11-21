@@ -115,6 +115,72 @@ namespace MyFreshMushroom.Tests
         }
 
         [UnityTest]
+        public IEnumerator ProductionTabsShowSelectedRecipeAndLimitBatchesToOwnedMushrooms()
+        {
+            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return null;
+            var session = Object.FindFirstObjectByType<GameManager>();
+            if (session.Tutorial != null) Assert.Ignore("This test exercises unrestricted batch selection.");
+
+            var forest = Object.FindFirstObjectByType<ForestGridView>();
+            var panel = Object.FindFirstObjectByType<SpawnProductionPanel>();
+            var first = session.SpawnProduction.Recipes.Single(recipe => recipe.Mushroom == session.StartingMushroom);
+            var second = session.SpawnProduction.Recipes.First(recipe => recipe != first);
+            Assert.That(session.Progress.TryDiscover(second.Mushroom.Id), Is.True);
+            int owned = session.Inventory.State.GetAmounts(first.Mushroom.Id).Mushrooms;
+            if (owned > 0)
+                Assert.That(session.Inventory.TrySpend(first.Mushroom.Id, ResourceKind.Mushroom, owned), Is.True);
+            int twoBatches = 2 * first.MushroomCost;
+            Assert.That(session.Inventory.TryAdd(first.Mushroom.Id, ResourceKind.Mushroom, twoBatches), Is.True);
+
+            forest.Selection.Select(forest.Facilities.Single(view => view.State.Definition.Kind == FacilityKind.SpawnWorkbench).State);
+            GameObject.Find("Open Production").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+
+            var tabs = panel.Content.Find("Recipe Tabs");
+            var body = panel.Content.Find("Recipe Body");
+            Assert.That(tabs.childCount, Is.EqualTo(2));
+            var tabBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(panel.Content, tabs);
+            var bodyBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(panel.Content, body);
+            Assert.That(tabBounds.min.y, Is.GreaterThanOrEqualTo(bodyBounds.max.y - 0.01f));
+
+            var increase = body.Find("Increase").GetComponent<Button>();
+            var decrease = body.Find("Decrease").GetComponent<Button>();
+            var produce = body.Find("Produce").GetComponent<Button>();
+            var cost = body.Find("Recipe Totals/Mushroom Cost").GetComponent<Text>();
+            var output = body.Find("Recipe Totals/Spawn Output").GetComponent<Text>();
+            var quantity = body.Find("Batch Count").GetComponent<Text>();
+            var remaining = body.Find("Owned Mushrooms").GetComponent<Text>();
+            var title = body.Find("Details").GetComponent<Text>();
+            Assert.That(increase.interactable, Is.True);
+            increase.onClick.Invoke();
+            Assert.That(cost.text, Does.EndWith($"{twoBatches}개"));
+            Assert.That(output.text, Does.EndWith($"{2 * first.SpawnOutput}개"));
+            Assert.That(remaining.text, Does.EndWith($"{twoBatches}개"));
+            Assert.That(increase.interactable, Is.False);
+            increase.onClick.Invoke();
+            Assert.That(quantity.text, Is.EqualTo("2회"));
+
+            var secondTab = tabs.GetComponentsInChildren<Button>().Single(button => button.interactable);
+            secondTab.onClick.Invoke();
+            Assert.That(title.text, Is.EqualTo(second.Mushroom.DisplayName));
+            Assert.That(quantity.text, Is.EqualTo("1회"));
+            Assert.That(remaining.text, Does.EndWith("0개"));
+            Assert.That(produce.interactable, Is.False);
+            Assert.That(increase.interactable, Is.False);
+
+            tabs.GetComponentsInChildren<Button>().Single(button => button.interactable).onClick.Invoke();
+            increase.onClick.Invoke();
+            decrease.onClick.Invoke();
+            Assert.That(cost.text, Does.EndWith($"{first.MushroomCost}개"));
+            increase.onClick.Invoke();
+            produce.onClick.Invoke();
+            Assert.That(remaining.text, Does.EndWith("0개"));
+            Assert.That(quantity.text, Is.EqualTo("1회"));
+            Assert.That(produce.interactable, Is.False);
+        }
+
+        [UnityTest]
         public IEnumerator ForestHasExpectedLayoutAndBothFacilitiesCanBeSelected()
         {
             yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);

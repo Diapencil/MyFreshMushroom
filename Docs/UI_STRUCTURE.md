@@ -26,7 +26,7 @@ FacilityPanel은 Context Actions에 붙어 종균 심기·물 주기 버튼과 �
 
 GameplayPopup은 프리팹에 지정된 창을 표시한다. 팝업 루트는 활성 상태를 유지하고 자식 Popup Backdrop을 켜고 끈다. 제작 화면도 같은 방식이라 팝업을 닫아도 SpawnProductionPanel의 상태 구독을 유지한다.
 
-SpawnProductionPanel은 배양대 선택 시 레시피 버튼 프리팹을 복제한다. 목록 간격과 항목 크기는 LayoutGroup과 LayoutElement에서 편집한다. 팝업 높이는 레시피 개수에 맞춰 조정한다.
+SpawnProductionPanel은 배양대 선택 시 발견한 레시피의 버튼 프리팹을 복제해 가로 탭으로 배치한다. 탭 간격과 크기는 HorizontalLayoutGroup과 LayoutElement에서 편집한다. 팝업 높이는 고정이며 탭 아래에 선택한 버섯의 제작 합계와 보유량을 표시한다.
 
 TutorialPanel은 안내 대상에 맞춰 가림막 크기를 계산하고 가장 위에 표시한다. 팝업을 맨 앞으로 표시하는 형제 순서 변경은 유지한다.
 
