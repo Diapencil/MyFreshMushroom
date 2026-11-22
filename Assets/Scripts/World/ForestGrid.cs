@@ -36,6 +36,11 @@ namespace MyFreshMushroom
 
         public bool TryWorldToCell(Vector2 position, out Vector2Int cell)
         {
+            return TryWorldToCell(position, out cell, 0);
+        }
+
+        internal bool TryWorldToCell(Vector2 position, out Vector2Int cell, int margin)
+        {
             cell = default;
             if (!float.IsFinite(position.x) || !float.IsFinite(position.y))
                 return false;
@@ -43,8 +48,9 @@ namespace MyFreshMushroom
             float difference = position.x * 2 / TileSize.x;
             float x = (sum - difference) * 0.5f;
             float y = (sum + difference) * 0.5f;
-            if (x < MinCellCoordinate || y < MinCellCoordinate
-                || x >= MaxCellCoordinateExclusive || y >= MaxCellCoordinateExclusive)
+            if (!float.IsFinite(x) || !float.IsFinite(y)
+                || x < MinCellCoordinate - margin || y < MinCellCoordinate - margin
+                || x >= MaxCellCoordinateExclusive + margin || y >= MaxCellCoordinateExclusive + margin)
                 return false;
             cell = new Vector2Int(Mathf.FloorToInt(x), Mathf.FloorToInt(y));
             return true;

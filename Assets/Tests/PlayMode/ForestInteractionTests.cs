@@ -13,6 +13,111 @@ namespace MyFreshMushroom.Tests
     public sealed class ForestInteractionTests
     {
         [UnityTest]
+        public IEnumerator FacilitiesCanBeBuiltMovedFlippedAndDemolishedThroughTheActionMenu()
+        {
+            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return null;
+
+            var session = Object.FindFirstObjectByType<GameManager>();
+            if (session.Tutorial != null) Assert.Ignore("This test exercises unrestricted facility management.");
+            var forest = Object.FindFirstObjectByType<ForestGridView>();
+            var input = Object.FindFirstObjectByType<WorldInteractionController>();
+            var definition = session.BuildableFacilities.Single(data => data.SupportedMushroom == session.StartingMushroom);
+            var mushroomId = definition.SupportedMushroom.Id;
+            var occupiedCell = forest.Facilities.Single(view => view.State.InstanceId == "starting-oyster-shelf").State.Origin;
+            var buildCell = new Vector2Int(-4, -2);
+            var moveCell = new Vector2Int(-3, -2);
+            int originalCount = forest.Facilities.Count;
+
+            Vector2 ScreenPoint(Vector2Int cell) => Camera.main.WorldToScreenPoint(
+                forest.transform.TransformPoint(forest.Grid.CellCenterToWorld(cell)));
+
+            GameObject.Find("Build").GetComponent<Button>().onClick.Invoke();
+            var buildOption = GameObject.Find("Confirm Action").GetComponent<Button>();
+            Assert.That(buildOption.IsInteractable(), Is.False);
+            Assert.That(GameObject.Find("Show Hint"), Is.Null, "The second build option requires discovery.");
+            session.Inventory.TryAdd(mushroomId, ResourceKind.Mushroom, definition.ConstructionCost);
+            Assert.That(buildOption.IsInteractable(), Is.True);
+            buildOption.onClick.Invoke();
+            Canvas.ForceUpdateCanvases();
+            Assert.That(input.IsPlacingFacility, Is.True);
+            Assert.That(input.TrySelectAtScreenPosition(ScreenPoint(occupiedCell)), Is.False);
+            Assert.That(session.TryBuildFacility(definition, new Vector2Int(7, 7), false, out _), Is.False);
+            Assert.That(session.Inventory.State.GetAmounts(mushroomId).Mushrooms, Is.EqualTo(definition.ConstructionCost));
+            Assert.That(input.TrySelectAtScreenPosition(ScreenPoint(buildCell)), Is.True);
+            Assert.That(input.IsPlacingFacility, Is.False);
+            Assert.That(forest.Facilities.Count, Is.EqualTo(originalCount + 1));
+            Assert.That(session.Inventory.State.GetAmounts(mushroomId).Mushrooms, Is.Zero);
+
+            var facility = forest.Selection.Selected;
+            var view = forest.Facilities.Single(item => item.State == facility);
+            Assert.That(facility.Origin, Is.EqualTo(buildCell));
+            Assert.That(session.Cultivation.TryInoculate(facility), Is.True);
+            session.Cultivation.Tick(facility.Cultivation.SecondsUntilWatering);
+            Assert.That(session.Cultivation.TryWater(facility), Is.True);
+            double elapsed = facility.Cultivation.ElapsedSeconds;
+
+            AssertVisibleButtonLabel("Move Facility", "이동");
+            AssertVisibleButtonLabel("Demolish Facility", "철거");
+            Vector3 originalPosition = view.transform.position;
+            Vector2 movePointer = Camera.main.WorldToScreenPoint(forest.transform.TransformPoint(
+                forest.Grid.GridToWorld((Vector2)moveCell + (Vector2)facility.Footprint * 0.5f)));
+            GameObject.Find("Move Facility").GetComponent<Button>().onClick.Invoke();
+            var preview = forest.transform.Find("Facility Placement Preview");
+            Assert.That(view.gameObject.activeSelf, Is.False);
+            Assert.That(preview.gameObject.activeSelf, Is.True);
+            Assert.That(preview.position, Is.EqualTo(originalPosition));
+            Assert.That(preview.GetComponent<SpriteRenderer>().color.a, Is.LessThan(1f));
+            Assert.That(preview.Find("Growth").GetComponent<SpriteRenderer>().sprite,
+                Is.SameAs(view.transform.Find("Growth").GetComponent<SpriteRenderer>().sprite));
+            AssertVisibleButtonLabel("Flip Placement", "좌우 반전\n[R]");
+            AssertVisibleButtonLabel("Cancel Placement", "취소\n[Esc]");
+            GameObject.Find("Flip Placement").GetComponent<Button>().onClick.Invoke();
+            GameObject.Find("Cancel Placement").GetComponent<Button>().onClick.Invoke();
+            Assert.That(facility.Origin, Is.EqualTo(buildCell));
+            Assert.That(facility.IsFlipped, Is.False);
+            Assert.That(view.gameObject.activeSelf, Is.True);
+            Assert.That(view.transform.position, Is.EqualTo(originalPosition));
+            Assert.That(preview.gameObject.activeSelf, Is.False);
+
+            GameObject.Find("Move Facility").GetComponent<Button>().onClick.Invoke();
+            GameObject.Find("Flip Placement").GetComponent<Button>().onClick.Invoke();
+            Canvas.ForceUpdateCanvases();
+            Assert.That(input.TrySelectAtScreenPosition(movePointer), Is.True);
+            Assert.That(view.gameObject.activeSelf, Is.True);
+            Assert.That(preview.gameObject.activeSelf, Is.False);
+            Assert.That(forest.Selection.Selected, Is.SameAs(facility));
+            Assert.That(facility.Origin, Is.EqualTo(moveCell));
+            Assert.That(facility.Footprint, Is.EqualTo(new Vector2Int(definition.Footprint.y, definition.Footprint.x)));
+            Assert.That(view.GetComponent<SpriteRenderer>().flipX, Is.True);
+            Assert.That(facility.Cultivation.ElapsedSeconds, Is.EqualTo(elapsed));
+            Assert.That(facility.Cultivation.HasBeenWatered, Is.True);
+            session.Cultivation.Tick(100);
+            Assert.That(session.Cultivation.CanHarvest(facility), Is.True);
+
+            GameObject.Find("Demolish Facility").GetComponent<Button>().onClick.Invoke();
+            GameObject.Find("Cancel Confirmation").GetComponent<Button>().onClick.Invoke();
+            Assert.That(forest.Selection.Selected, Is.SameAs(facility));
+            GameObject.Find("Demolish Facility").GetComponent<Button>().onClick.Invoke();
+            GameObject.Find("Confirm Action").GetComponent<Button>().onClick.Invoke();
+            Assert.That(forest.Selection.Selected, Is.Null);
+            Assert.That(forest.Facilities.Count, Is.EqualTo(originalCount));
+            Assert.That(session.Cultivation.CanHarvest(facility), Is.False);
+            Assert.That(session.Inventory.State.GetAmounts(mushroomId).Mushrooms, Is.Zero);
+            session.Inventory.TryAdd(mushroomId, ResourceKind.Mushroom, definition.ConstructionCost);
+            Assert.That(session.CanPlaceFacility(definition, moveCell, true), Is.True);
+        }
+
+        private static void AssertVisibleButtonLabel(string buttonName, string expectedText)
+        {
+            var label = GameObject.Find(buttonName).GetComponentInChildren<Text>();
+            Assert.That(label, Is.Not.Null, buttonName);
+            Assert.That(label.isActiveAndEnabled, Is.True, buttonName);
+            Assert.That(label.text, Is.EqualTo(expectedText));
+            Assert.That(label.font != null && label.font.HasCharacter(expectedText[0]), Is.True, buttonName);
+        }
+
+        [UnityTest]
         public IEnumerator CultivationProductionAndExplorationUsePrefabUiWithoutReparenting()
         {
             yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);

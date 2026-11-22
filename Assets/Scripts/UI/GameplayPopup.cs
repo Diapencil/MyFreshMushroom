@@ -70,23 +70,33 @@ namespace MyFreshMushroom
 
         public void ShowConfirmation(string heading)
         {
+            ShowConfirmation(heading, "복원 확정", restorationConfirm);
+        }
+
+        public void ShowConfirmation(string heading, string confirmLabel, Action onConfirm)
+        {
             ShowText(heading, "");
-            confirmationAction = restorationConfirm;
+            confirmationAction = onConfirm;
             confirm.interactable = true;
             cancel.GetComponentInChildren<Text>(true).text = "취소";
-            confirm.GetComponentInChildren<Text>(true).text = "복원 확정";
+            confirm.GetComponentInChildren<Text>(true).text = confirmLabel;
             footer.gameObject.SetActive(true);
             SetBodyBottom(confirmationBottomPadding);
         }
 
+        public void SetSecondaryAction(string label, Action action, bool interactable)
+        {
+            hintAction = action;
+            hint.GetComponentInChildren<Text>(true).text = label;
+            hint.interactable = interactable;
+            hint.gameObject.SetActive(action != null);
+        }
+
         public void ShowExitConfirmation(bool hasRemaining, Action onConfirm, Action onHint)
         {
-            ShowConfirmation("탐험 종료");
-            confirmationAction = onConfirm;
-            hintAction = onHint;
+            ShowConfirmation("탐험 종료", "돌아가기(확정)", onConfirm);
             cancel.GetComponentInChildren<Text>(true).text = "계속 탐색";
-            confirm.GetComponentInChildren<Text>(true).text = "돌아가기(확정)";
-            hint.gameObject.SetActive(hasRemaining);
+            SetSecondaryAction("힌트 보기", hasRemaining ? onHint : null, true);
         }
 
         public void SetConfirmationInteractable(bool value) => confirm.interactable = value;

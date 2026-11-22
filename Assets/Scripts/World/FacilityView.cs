@@ -17,40 +17,47 @@ namespace MyFreshMushroom
         {
             State = state;
             name = state.Definition.DisplayName;
-            Vector2 centre = grid.GridToWorld((Vector2)state.Origin + (Vector2)state.Definition.Footprint * 0.5f);
-            transform.localPosition = centre;
-
-            var body = GetComponent<SpriteRenderer>();
-            body.sprite = state.Definition.Sprite;
-            // Lower ground anchors draw in front; picking uses the same order.
-            body.sortingOrder = 1000 - Mathf.RoundToInt(centre.y * 100);
-            var collider = GetComponent<BoxCollider2D>();
-            collider.offset = body.sprite.bounds.center;
-            collider.size = body.sprite.bounds.size;
-
             outline = GetComponent<LineRenderer>();
-            outline.sharedMaterial = body.sharedMaterial;
+            outline.sharedMaterial = GetComponent<SpriteRenderer>().sharedMaterial;
             outline.useWorldSpace = false;
             outline.loop = true;
             outline.widthMultiplier = 0.035f;
             outline.startColor = outline.endColor = new Color(1, 0.87f, 0.35f);
-            outline.sortingOrder = body.sortingOrder - 1;
-            Vector2 origin = state.Origin;
-            Vector2 size = state.Definition.Footprint;
             outline.positionCount = 4;
-            outline.SetPositions(new[] {
-                (Vector3)(grid.GridToWorld(origin) - centre),
-                (Vector3)(grid.GridToWorld(origin + new Vector2(size.x, 0)) - centre),
-                (Vector3)(grid.GridToWorld(origin + size) - centre),
-                (Vector3)(grid.GridToWorld(origin + new Vector2(0, size.y)) - centre)
-            });
-            SetSelected(false);
             var overlay = new GameObject("Growth", typeof(SpriteRenderer));
             overlay.transform.SetParent(transform, false);
             growthOverlay = overlay.GetComponent<SpriteRenderer>();
-            growthOverlay.sortingOrder = body.sortingOrder + 1;
+            RefreshPlacement(grid);
+            RefreshOutline();
             State.Cultivation.Changed += RefreshGrowth;
             RefreshGrowth();
+        }
+
+        internal void RefreshPlacement(ForestGrid grid)
+        {
+            Vector2 origin = State.Origin;
+            Vector2 size = State.Footprint;
+            Vector2 centre = grid.GridToWorld(origin + size * 0.5f);
+            transform.localPosition = centre;
+
+            var body = GetComponent<SpriteRenderer>();
+            body.sprite = State.Definition.Sprite;
+            body.flipX = State.IsFlipped;
+            // Lower ground anchors draw in front; picking uses the same order.
+            body.sortingOrder = 1000 - Mathf.RoundToInt(centre.y * 100);
+            var collider = GetComponent<BoxCollider2D>();
+            Vector2 offset = body.sprite.bounds.center;
+            if (body.flipX) offset.x = -offset.x;
+            collider.offset = offset;
+            collider.size = body.sprite.bounds.size;
+
+            outline.sortingOrder = body.sortingOrder - 1;
+            outline.SetPosition(0, grid.GridToWorld(origin) - centre);
+            outline.SetPosition(1, grid.GridToWorld(origin + new Vector2(size.x, 0)) - centre);
+            outline.SetPosition(2, grid.GridToWorld(origin + size) - centre);
+            outline.SetPosition(3, grid.GridToWorld(origin + new Vector2(0, size.y)) - centre);
+            growthOverlay.sortingOrder = body.sortingOrder + 1;
+            growthOverlay.flipX = State.IsFlipped;
         }
 
         public void SetSelected(bool selected)

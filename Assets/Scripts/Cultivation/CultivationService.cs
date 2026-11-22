@@ -26,15 +26,21 @@ namespace MyFreshMushroom
         private readonly InventoryService inventory;
         private readonly HashSet<FacilityState> facilities;
         private bool processingAction;
+        internal bool IsProcessingAction => processingAction;
         private readonly IGameplayActionRules actionRules;
         public event Action<FacilityState> Inoculated;
         public event Action<FacilityState> Watered;
         public event Action<HarvestResult> Harvested;
 
         public CultivationService(InventoryService inventory, IEnumerable<FacilityState> facilities, IGameplayActionRules actionRules = null)
+            : this(inventory, new HashSet<FacilityState>(facilities ?? throw new ArgumentNullException(nameof(facilities))), actionRules)
+        {
+        }
+
+        internal CultivationService(InventoryService inventory, HashSet<FacilityState> facilities, IGameplayActionRules actionRules)
         {
             this.inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
-            this.facilities = new HashSet<FacilityState>(facilities ?? throw new ArgumentNullException(nameof(facilities)));
+            this.facilities = facilities;
             this.actionRules = actionRules;
         }
 
@@ -113,8 +119,13 @@ namespace MyFreshMushroom
             if (processingAction || !double.IsFinite(seconds) || seconds <= 0) return;
             seconds = actionRules != null ? actionRules.GetGrowthDelta(seconds) : seconds;
             if (seconds <= 0) return;
-            foreach (var facility in facilities)
-                if (facility != null) facility.Cultivation.Advance(seconds);
+            processingAction = true;
+            try
+            {
+                foreach (var facility in facilities)
+                    if (facility != null) facility.Cultivation.Advance(seconds);
+            }
+            finally { processingAction = false; }
         }
 
         private bool OwnsCultivationFacility(FacilityState facility)

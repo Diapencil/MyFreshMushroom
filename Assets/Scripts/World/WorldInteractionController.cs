@@ -19,8 +19,15 @@ namespace MyFreshMushroom
         private Vector2 pressPosition;
         private Vector2 previousPosition;
         private readonly List<RaycastResult> uiHits = new List<RaycastResult>();
+        private FacilityData placementDefinition;
+        private FacilityState movingFacility;
+        private bool placementFlipped;
+        private Vector2Int previewCell;
+        private Vector2? pointerBeforePickup;
         public ForestAreaState SelectedArea { get; private set; }
         public event Action AreaSelectionChanged;
+        public bool IsPlacingFacility => placementDefinition != null;
+        public event Action PlacementChanged;
 
         private void OnEnable()
         {
@@ -42,13 +49,26 @@ namespace MyFreshMushroom
             forest.Selection.Changed -= OnFacilitySelected;
             if (session.Tutorial != null) session.Tutorial.Changed -= OnTutorialChanged;
             ready = pressed = dragged = false;
+            CancelPlacement();
             SelectArea(null);
         }
 
         private void Update()
         {
             var mouse = Mouse.current;
-            if (!ready || mouse == null || forest.IsPresentingRestoration) { pressed = dragged = false; return; }
+            if (!ready) return;
+            if (IsPlacingFacility && (!session.CanManageFacilities || Keyboard.current?.escapeKey.wasPressedThisFrame == true))
+            {
+                CancelPlacement();
+                return;
+            }
+            if (mouse == null || forest.IsPresentingRestoration)
+            {
+                pressed = dragged = false;
+                if (movingFacility == null) forest.HidePlacementPreview();
+                return;
+            }
+            if (IsPlacingFacility && Keyboard.current?.rKey.wasPressedThisFrame == true) FlipPlacement();
             Vector2 pointer = mouse.position.ReadValue();
             bool canMoveCamera = !session.IsGameplayPaused;
             if (mouse.leftButton.wasPressedThisFrame)
@@ -61,19 +81,130 @@ namespace MyFreshMushroom
             float scroll = mouse.scroll.ReadValue().y;
             if (scroll != 0 && canMoveCamera && CanPointAtWorld(pointer)) forestCamera.Zoom(pointer, scroll);
 
-            if (!pressed) return;
-            if (!dragged && (pointer - pressPosition).sqrMagnitude > 25)
+            if (pressed)
             {
-                dragged = true;
-                previousPosition = pressPosition;
+                if (!dragged && (pointer - pressPosition).sqrMagnitude > 25)
+                {
+                    dragged = true;
+                    previousPosition = pressPosition;
+                }
+                if (dragged && canMoveCamera) forestCamera.Pan(previousPosition, pointer);
+                previousPosition = pointer;
+                if (mouse.leftButton.wasReleasedThisFrame)
+                {
+                    if (!dragged) TrySelectAtScreenPosition(pointer);
+                    pressed = dragged = false;
+                }
             }
-            if (dragged && canMoveCamera) forestCamera.Pan(previousPosition, pointer);
-            previousPosition = pointer;
-            if (mouse.leftButton.wasReleasedThisFrame)
+            if (!IsPlacingFacility) return;
+            // The OS moves the cursor before the Input System reports its new position.
+            if (pointerBeforePickup.HasValue && pointer == pointerBeforePickup.Value) return;
+            pointerBeforePickup = null;
+            if (!dragged && CanPointAtWorld(pointer) && TryGetWorldPoint(pointer, out var worldPosition)
+                && TryGetPlacementCell(worldPosition, out var cell))
+                RefreshPlacementPreview(cell);
+            else if (movingFacility == null) forest.HidePlacementPreview();
+        }
+
+        public void BeginConstruction(FacilityData definition)
+        {
+            if (!ready || IsPlacingFacility || !session.CanManageFacilities || !session.CanAffordFacility(definition)) return;
+            BeginPlacement(definition, null);
+        }
+
+        public void BeginFacilityMove(FacilityState facility)
+        {
+            if (!ready || IsPlacingFacility || !session.CanManageFacility(facility)) return;
+            BeginPlacement(facility.Definition, facility);
+            forest.SetFacilityVisible(facility, false);
+            RefreshPlacementPreview(facility.Origin);
+
+            var mouse = Mouse.current;
+            pointerBeforePickup = mouse?.position.ReadValue();
+            if (mouse == null || !Application.isFocused || Application.isBatchMode) return;
+
+            Vector3 centre = forest.transform.TransformPoint(
+                forest.Grid.GridToWorld((Vector2)facility.Origin + (Vector2)facility.Footprint * 0.5f));
+            Vector2 screenPoint = worldCamera.WorldToScreenPoint(centre);
+            if (!CanPointAtWorld(screenPoint))
             {
-                if (!dragged) TrySelectAtScreenPosition(pointer);
-                pressed = dragged = false;
+                forestCamera.Pan(screenPoint, worldCamera.pixelRect.center);
+                screenPoint = worldCamera.WorldToScreenPoint(centre);
             }
+            if (CanPointAtWorld(screenPoint)) mouse.WarpCursorPosition(screenPoint);
+        }
+
+        private void BeginPlacement(FacilityData definition, FacilityState facility)
+        {
+            pressed = dragged = false;
+            placementDefinition = definition;
+            movingFacility = facility;
+            placementFlipped = facility != null && facility.IsFlipped;
+            PlacementChanged?.Invoke();
+        }
+
+        public void FlipPlacement()
+        {
+            if (!IsPlacingFacility) return;
+            placementFlipped = !placementFlipped;
+            if (movingFacility != null) RefreshPlacementPreview(previewCell);
+        }
+
+        private void RefreshPlacementPreview(Vector2Int cell)
+        {
+            previewCell = cell;
+            var crop = movingFacility?.Cultivation;
+            var growthSprite = crop?.Mushroom != null ? crop.Mushroom.GetGrowthStageSprite(crop.Stage) : null;
+            bool valid = session.CanPlaceFacility(placementDefinition, cell, placementFlipped, movingFacility);
+            forest.ShowPlacementPreview(placementDefinition, cell, placementFlipped, valid, growthSprite);
+        }
+
+        public void CancelPlacement()
+        {
+            if (!IsPlacingFacility) return;
+            if (movingFacility != null) forest.SetFacilityVisible(movingFacility, true);
+            placementDefinition = null;
+            movingFacility = null;
+            pointerBeforePickup = null;
+            pressed = dragged = false;
+            forest.HidePlacementPreview();
+            PlacementChanged?.Invoke();
+        }
+
+        private bool TryGetPlacementCell(Vector2 worldPosition, out Vector2Int cell)
+        {
+            Vector2Int footprint = placementDefinition.GetFootprint(placementFlipped);
+            int margin = Mathf.Max(1, Mathf.Max(footprint.x, footprint.y));
+            Vector2 localPosition = forest.transform.InverseTransformPoint(worldPosition);
+            if (movingFacility != null)
+            {
+                // Keep the cursor over the same part of the facility as when it was picked up.
+                localPosition -= forest.Grid.GridToWorld(((Vector2)movingFacility.Footprint - Vector2.one) * 0.5f);
+            }
+            return forest.Grid.TryWorldToCell(localPosition, out cell, margin);
+        }
+
+        private bool TryCompletePlacement(Vector2 worldPosition)
+        {
+            if (!TryGetPlacementCell(worldPosition, out var cell)) return false;
+            var facility = movingFacility;
+            bool placed = facility != null
+                ? session.TryMoveFacility(facility, cell, placementFlipped)
+                : session.TryBuildFacility(placementDefinition, cell, placementFlipped, out facility);
+            if (!placed) return false;
+            CancelPlacement();
+            forest.Selection.Select(facility);
+            return true;
+        }
+
+        private bool TryGetWorldPoint(Vector2 position, out Vector2 worldPosition)
+        {
+            var plane = new Plane(Vector3.forward, forest.transform.position);
+            Ray ray = worldCamera.ScreenPointToRay(position);
+            worldPosition = default;
+            if (!plane.Raycast(ray, out float distance)) return false;
+            worldPosition = ray.GetPoint(distance);
+            return true;
         }
 
         private void OnApplicationFocus(bool hasFocus)
@@ -103,11 +234,8 @@ namespace MyFreshMushroom
         {
             if (!ready || !isActiveAndEnabled || forest.IsPresentingRestoration || !CanPointAtWorld(position)) return false;
 
-            var plane = new Plane(Vector3.forward, forest.transform.position);
-            Ray ray = worldCamera.ScreenPointToRay(position);
-            if (!plane.Raycast(ray, out float distance))
-                return false;
-            Vector2 worldPosition = ray.GetPoint(distance);
+            if (!TryGetWorldPoint(position, out var worldPosition)) return false;
+            if (IsPlacingFacility) return TryCompletePlacement(worldPosition);
             FacilityView candidate = null;
             foreach (var hit in Physics2D.OverlapPointAll(worldPosition))
             {

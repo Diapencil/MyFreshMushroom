@@ -20,6 +20,7 @@ namespace MyFreshMushroom
         [SerializeField, HideInInspector, Min(1)] private int firstExplorationReward = 3;
         [SerializeField] private ForestAreaData[] forestAreas = System.Array.Empty<ForestAreaData>();
         [SerializeField] private MushroomData[] additionalMushrooms = System.Array.Empty<MushroomData>();
+        [SerializeField] private FacilityData[] buildableFacilities = System.Array.Empty<FacilityData>();
 
         public MushroomData StartingMushroom => startingMushroom;
         public InventoryService Inventory { get; private set; }
@@ -33,6 +34,9 @@ namespace MyFreshMushroom
         public IReadOnlyDictionary<string, ForestAreaState> ForestAreas { get; private set; }
         public bool IsInitialized => Inventory != null;
         public bool IsGameplayPaused => Tutorial != null && Tutorial.IsGameplayPaused;
+        public IReadOnlyList<FacilityData> BuildableFacilities => buildableFacilities;
+        public bool CanManageFacilities => IsInitialized && !IsGameplayPaused && !Exploration.IsExploring && !forest.IsPresentingRestoration
+            && (Tutorial == null || Tutorial.Step == TutorialStep.Completed);
         internal int LegacyFirstExplorationReward => firstExplorationReward;
 
         private void Awake()
@@ -122,7 +126,7 @@ namespace MyFreshMushroom
                 }
                 Tutorial = new TutorialManager(progress, shelf, workbench, tutorialRecipe);
             }
-            Cultivation = new CultivationService(inventory, facilities, Tutorial);
+            Cultivation = new CultivationService(inventory, forest.Selection.Registered, Tutorial);
             SpawnProduction = new SpawnProductionService(inventory, progress, spawnRecipes, Tutorial);
             Tutorial?.Bind(Cultivation, SpawnProduction);
             Exploration = new ExplorationService(inventory, progress, firstExplorationArea,
@@ -133,6 +137,67 @@ namespace MyFreshMushroom
             Restoration = new ForestRestorationService(inventory, ForestAreas, Tutorial);
             Progress = progress;
             Inventory = inventory;
+            return true;
+        }
+
+        public bool IsFacilityUnlocked(FacilityData definition)
+        {
+            return IsInitialized && definition != null && definition.Kind == FacilityKind.CultivationShelf
+                && definition.Sprite != null && definition.SupportedMushroom != null && definition.ConstructionCost > 0
+                && System.Array.IndexOf(buildableFacilities, definition) >= 0
+                && Progress.IsDiscovered(definition.SupportedMushroom.Id);
+        }
+
+        public bool CanAffordFacility(FacilityData definition)
+        {
+            return IsFacilityUnlocked(definition) && Inventory.CanAfford(definition.SupportedMushroom.Id,
+                ResourceKind.Mushroom, definition.ConstructionCost);
+        }
+
+        public bool CanManageFacility(FacilityState facility)
+        {
+            return CanManageFacilities && facility != null && facility.Definition.Kind == FacilityKind.CultivationShelf
+                && forest.Selection.Registered.Contains(facility);
+        }
+
+        public bool CanPlaceFacility(FacilityData definition, Vector2Int origin, bool flipped, FacilityState moving = null)
+        {
+            return CanManageFacilities
+                && (moving == null ? CanAffordFacility(definition) : CanManageFacility(moving) && moving.Definition == definition)
+                && forest.CanPlace(definition, origin, flipped, moving);
+        }
+
+        public bool TryBuildFacility(FacilityData definition, Vector2Int origin, bool flipped, out FacilityState facility)
+        {
+            facility = null;
+            if (!CanPlaceFacility(definition, origin, flipped) || Cultivation.IsProcessingAction) return false;
+
+            var state = new FacilityState(System.Guid.NewGuid().ToString("N"), definition, origin, flipped);
+            forest.AddFacility(state);
+            // Publish the inventory change only once the new facility is registered.
+            if (!Inventory.TrySpendSilently(definition.SupportedMushroom.Id, ResourceKind.Mushroom,
+                definition.ConstructionCost))
+            {
+                forest.RemoveFacility(state);
+                return false;
+            }
+            facility = state;
+            Inventory.NotifyChanged();
+            return true;
+        }
+
+        public bool TryMoveFacility(FacilityState facility, Vector2Int origin, bool flipped)
+        {
+            if (facility == null || !CanPlaceFacility(facility.Definition, origin, flipped, facility)
+                || Cultivation.IsProcessingAction) return false;
+            forest.MoveFacility(facility, origin, flipped);
+            return true;
+        }
+
+        public bool TryDemolishFacility(FacilityState facility)
+        {
+            if (!CanManageFacility(facility) || Cultivation.IsProcessingAction) return false;
+            forest.RemoveFacility(facility);
             return true;
         }
 

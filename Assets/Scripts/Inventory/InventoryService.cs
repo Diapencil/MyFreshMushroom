@@ -43,11 +43,18 @@ namespace MyFreshMushroom
 
         public bool TrySpend(string mushroomId, ResourceKind kind, int amount)
         {
+            if (!TrySpendSilently(mushroomId, kind, amount)) return false;
+            NotifyChanged();
+            return true;
+        }
+
+        internal bool TrySpendSilently(string mushroomId, ResourceKind kind, int amount)
+        {
             if (!CanAfford(mushroomId, kind, amount))
                 return false;
 
             var current = State.GetAmounts(mushroomId);
-            Apply(mushroomId, kind, current, GetQuantity(current, kind) - amount);
+            Apply(mushroomId, kind, current, GetQuantity(current, kind) - amount, false);
             return true;
         }
 

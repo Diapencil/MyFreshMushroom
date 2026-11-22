@@ -14,6 +14,7 @@ namespace MyFreshMushroom
         private FacilityState observedFacility;
         private InventoryService inventory;
         private TutorialManager tutorial;
+        private bool actionsVisible = true;
         private readonly KoreanUiFont uiFont = new KoreanUiFont();
         public RectTransform InoculateButtonTransform => (RectTransform)inoculateButton.transform;
         public RectTransform WaterButtonTransform => (RectTransform)waterButton.transform;
@@ -71,6 +72,13 @@ namespace MyFreshMushroom
 
         private void RefreshCurrent() => Refresh(observedFacility);
 
+        public void SetActionsVisible(bool visible)
+        {
+            if (actionsVisible == visible) return;
+            actionsVisible = visible;
+            if (selection != null) RefreshCurrent();
+        }
+
         private void InoculateSelected()
         {
             if (observedFacility == null || observedFacility.Definition.Kind != FacilityKind.CultivationShelf
@@ -103,11 +111,11 @@ namespace MyFreshMushroom
         private void Refresh(FacilityState state)
         {
             bool canWater = session.Cultivation.CanWater(state);
-            waterButton.gameObject.SetActive(canWater);
+            waterButton.gameObject.SetActive(actionsVisible && canWater);
             waterButton.interactable = canWater;
             bool emptyShelf = state != null && state.Definition.Kind == FacilityKind.CultivationShelf
                 && state.Cultivation.Stage == GrowthStage.Empty;
-            inoculateButton.gameObject.SetActive(emptyShelf);
+            inoculateButton.gameObject.SetActive(actionsVisible && emptyShelf);
             inoculateButton.interactable = emptyShelf && session.Cultivation.CanInoculate(state);
             Status = Describe(state);
             StatusChanged?.Invoke();

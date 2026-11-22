@@ -7,10 +7,12 @@ namespace MyFreshMushroom
     {
         public string InstanceId { get; }
         public FacilityData Definition { get; }
-        public Vector2Int Origin { get; }
+        public Vector2Int Origin { get; private set; }
+        public bool IsFlipped { get; private set; }
+        public Vector2Int Footprint => Definition.GetFootprint(IsFlipped);
         public CultivationState Cultivation { get; } = new CultivationState();
 
-        public FacilityState(string instanceId, FacilityData definition, Vector2Int origin)
+        public FacilityState(string instanceId, FacilityData definition, Vector2Int origin, bool flipped = false)
         {
             if (string.IsNullOrWhiteSpace(instanceId))
                 throw new ArgumentException("An instance ID is required.", nameof(instanceId));
@@ -20,11 +22,18 @@ namespace MyFreshMushroom
             InstanceId = instanceId;
             Definition = definition;
             Origin = origin;
+            IsFlipped = flipped;
+        }
+
+        internal void MoveTo(Vector2Int origin, bool flipped)
+        {
+            Origin = origin;
+            IsFlipped = flipped;
         }
 
         public bool ContainsCell(Vector2Int cell)
         {
-            Vector2Int size = Definition.Footprint;
+            Vector2Int size = Footprint;
             return cell.x >= Origin.x && cell.y >= Origin.y
                 && cell.x < (long)Origin.x + size.x && cell.y < (long)Origin.y + size.y;
         }

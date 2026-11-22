@@ -15,7 +15,7 @@ namespace MyFreshMushroom
         [SerializeField] private SpawnProductionPanel productionPanel;
         [SerializeField] private bool showCooldownAsMinutesAndSeconds;
 
-        private enum PopupPage { None, Facility, Area, Restoration, Catalogue, Production, Exploration, ExitExploration }
+        private enum PopupPage { None, Facility, Area, Restoration, Catalogue, Production, Exploration, ExitExploration, Build, Demolish }
 
         private readonly KoreanUiFont font = new KoreanUiFont();
         [SerializeField] private RectTransform row;
@@ -31,6 +31,12 @@ namespace MyFreshMushroom
         [SerializeField] private Button production;
         [SerializeField] private Button restore;
         [SerializeField] private Button information;
+        [SerializeField] private Button moveFacility;
+        [SerializeField] private Button demolishFacility;
+        [SerializeField] private Button flipPlacement;
+        [SerializeField] private Button cancelPlacement;
+        private FacilityData firstBuildOption;
+        private FacilityData secondBuildOption;
         private int restorationStage;
         private bool hintRevealed;
 
@@ -44,7 +50,8 @@ namespace MyFreshMushroom
                 || forest == null || facilityPanel == null || productionPanel == null
                 || row == null || actions == null || popup == null || productionPopup == null
                 || build == null || catalogue == null || harvest == null || production == null
-                || restore == null || information == null)
+                || restore == null || information == null || moveFacility == null || demolishFacility == null
+                || flipPlacement == null || cancelPlacement == null)
             {
                 Debug.LogError("GameplayActionMenu requires its prefab UI, selection and gameplay panel references.", this);
                 return;
@@ -53,6 +60,11 @@ namespace MyFreshMushroom
             if (!popup.Initialize(font, ClosePopupFromButton, ConfirmRestoration)
                 || !productionPopup.Initialize(font, ClosePopupFromButton, null)) return;
             foreach (var label in row.GetComponentsInChildren<Text>(true)) font.Apply(label);
+            build.onClick.AddListener(OpenBuild);
+            moveFacility.onClick.AddListener(BeginMove);
+            demolishFacility.onClick.AddListener(OpenDemolition);
+            flipPlacement.onClick.AddListener(worldInput.FlipPlacement);
+            cancelPlacement.onClick.AddListener(worldInput.CancelPlacement);
             catalogue.onClick.AddListener(OpenCatalogue);
             harvest.onClick.AddListener(HarvestSelected);
             production.onClick.AddListener(OpenProduction);
@@ -63,6 +75,7 @@ namespace MyFreshMushroom
             forest.Selection.Changed += OnFacilityChanged;
             forest.RestorationPresentationChanged += RefreshActions;
             worldInput.AreaSelectionChanged += OnContextChanged;
+            worldInput.PlacementChanged += RefreshActions;
             session.Exploration.Changed += OnContextChanged;
             session.Exploration.CooldownChanged += OnCooldownChanged;
             session.Progress.DiscoveryChanged += RefreshPopup;
@@ -76,6 +89,11 @@ namespace MyFreshMushroom
         {
             if (!bound) return;
             bound = false;
+            build.onClick.RemoveListener(OpenBuild);
+            moveFacility.onClick.RemoveListener(BeginMove);
+            demolishFacility.onClick.RemoveListener(OpenDemolition);
+            flipPlacement.onClick.RemoveListener(worldInput.FlipPlacement);
+            cancelPlacement.onClick.RemoveListener(worldInput.CancelPlacement);
             catalogue.onClick.RemoveListener(OpenCatalogue);
             harvest.onClick.RemoveListener(HarvestSelected);
             production.onClick.RemoveListener(OpenProduction);
@@ -84,6 +102,9 @@ namespace MyFreshMushroom
             forest.Selection.Changed -= OnFacilityChanged;
             forest.RestorationPresentationChanged -= RefreshActions;
             worldInput.AreaSelectionChanged -= OnContextChanged;
+            worldInput.PlacementChanged -= RefreshActions;
+            worldInput.CancelPlacement();
+            facilityPanel.SetActionsVisible(true);
             session.Exploration.Changed -= OnContextChanged;
             session.Exploration.CooldownChanged -= OnCooldownChanged;
             session.Progress.DiscoveryChanged -= RefreshPopup;
@@ -150,14 +171,22 @@ namespace MyFreshMushroom
         {
             actions.interactable = page == PopupPage.None && !forest.IsPresentingRestoration;
             if (forest.IsPresentingRestoration) return;
+            bool placing = worldInput.IsPlacingFacility;
+            facilityPanel.SetActionsVisible(!placing);
+            flipPlacement.gameObject.SetActive(placing);
+            cancelPlacement.gameObject.SetActive(placing);
             bool exploring = session.Exploration.IsExploring;
             var area = worldInput.SelectedArea;
-            bool facilitySelected = !exploring && selectedFacility != null;
-            bool areaSelected = !exploring && !facilitySelected && area != null;
-            bool defaultMenu = !exploring && !facilitySelected && !areaSelected;
+            bool facilitySelected = !placing && !exploring && selectedFacility != null;
+            bool areaSelected = !placing && !exploring && !facilitySelected && area != null;
+            bool defaultMenu = !placing && !exploring && !facilitySelected && !areaSelected;
             bool firstExploration = defaultMenu && session.Tutorial?.Step == TutorialStep.AwaitFirstExploration;
 
             build.gameObject.SetActive(defaultMenu);
+            build.interactable = session.CanManageFacilities;
+            bool canManage = facilitySelected && session.CanManageFacility(selectedFacility);
+            moveFacility.gameObject.SetActive(canManage);
+            demolishFacility.gameObject.SetActive(canManage);
             catalogue.gameObject.SetActive(defaultMenu);
             harvest.gameObject.SetActive(facilitySelected && selectedFacility.Cultivation.Stage == GrowthStage.Ready);
             harvest.interactable = facilitySelected && session.Cultivation.CanHarvest(selectedFacility);
@@ -174,6 +203,56 @@ namespace MyFreshMushroom
                     ? $"탐험가기\n{FormatCooldown(entryArea.RemainingCooldownSeconds)}" : "탐험가기";
             exploration.ReturnButton.gameObject.SetActive(exploring);
             information.gameObject.SetActive(facilitySelected || areaSelected || exploring);
+        }
+
+        private void OpenBuild()
+        {
+            if (!session.CanManageFacilities) return;
+            firstBuildOption = secondBuildOption = null;
+            foreach (var definition in session.BuildableFacilities)
+            {
+                if (!session.IsFacilityUnlocked(definition)) continue;
+                if (firstBuildOption == null) firstBuildOption = definition;
+                else
+                {
+                    secondBuildOption = definition;
+                    break;
+                }
+            }
+            if (firstBuildOption == null)
+            {
+                page = PopupPage.Build;
+                actions.interactable = false;
+                popup.ShowText("시설 건설", "건설할 수 있는 재배 시설이 없습니다.");
+                return;
+            }
+            page = PopupPage.Build;
+            actions.interactable = false;
+            popup.ShowConfirmation("시설 건설", firstBuildOption.SupportedMushroom.DisplayName,
+                () => BeginBuild(firstBuildOption));
+            RefreshPopup();
+        }
+
+        private void BeginBuild(FacilityData definition)
+        {
+            if (page != PopupPage.Build || !session.CanManageFacilities || !session.CanAffordFacility(definition)) return;
+            ClosePopup();
+            worldInput.BeginConstruction(definition);
+        }
+
+        private void BeginMove() => worldInput.BeginFacilityMove(selectedFacility);
+
+        private void OpenDemolition()
+        {
+            var facility = selectedFacility;
+            if (!session.CanManageFacility(facility)) return;
+            page = PopupPage.Demolish;
+            actions.interactable = false;
+            popup.ShowConfirmation("시설 철거", "철거 확정", () =>
+            {
+                if (page == PopupPage.Demolish && session.TryDemolishFacility(facility)) ClosePopup();
+            });
+            RefreshPopup();
         }
 
         private void OpenInformation()
@@ -259,8 +338,40 @@ namespace MyFreshMushroom
                 case PopupPage.Area: return DescribeArea(worldInput.SelectedArea);
                 case PopupPage.Restoration: return DescribeRestoration(worldInput.SelectedArea);
                 case PopupPage.Catalogue: return DescribeCatalogue();
+                case PopupPage.Build: return DescribeBuild();
+                case PopupPage.Demolish: return DescribeDemolition();
                 default: return "";
             }
+        }
+
+        private string DescribeBuild()
+        {
+            if (firstBuildOption == null) return "건설할 수 있는 재배 시설이 없습니다.";
+            popup.SetConfirmationInteractable(session.CanAffordFacility(firstBuildOption));
+            string description = $"필요 버섯 (보유 / 필요)\n\n{DescribeBuildOption(firstBuildOption)}";
+            if (secondBuildOption != null)
+            {
+                popup.SetSecondaryAction(secondBuildOption.SupportedMushroom.DisplayName,
+                    () => BeginBuild(secondBuildOption), session.CanAffordFacility(secondBuildOption));
+                description += $"\n\n{DescribeBuildOption(secondBuildOption)}";
+            }
+            return description;
+        }
+
+        private string DescribeBuildOption(FacilityData definition)
+        {
+            var mushroom = definition.SupportedMushroom;
+            int stock = session.Inventory.State.GetAmounts(mushroom.Id).Mushrooms;
+            return $"{definition.DisplayName}\n{mushroom.DisplayName} {stock} / {definition.ConstructionCost}";
+        }
+
+        private string DescribeDemolition()
+        {
+            if (selectedFacility == null) return "";
+            string description = $"{selectedFacility.Definition.DisplayName}을(를) 철거할까요?\n설치 비용은 돌려받을 수 없습니다.";
+            if (selectedFacility.Cultivation.Stage != GrowthStage.Empty)
+                description += "\n재배 중인 버섯과 수확물은 사라집니다.";
+            return description;
         }
 
         private string DescribeExit()

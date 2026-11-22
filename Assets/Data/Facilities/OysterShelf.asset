@@ -18,3 +18,4 @@ MonoBehaviour:
   footprint: {x: 3, y: 2}
   supportedMushroom: {fileID: 11400000, guid: 530a2652789c4474ba08b84762509a46, type: 2}
   sprite: {fileID: 21300000, guid: bfbf4b5c3eb7a3e4eafde432da271d1b, type: 3}
+  constructionCost: 3

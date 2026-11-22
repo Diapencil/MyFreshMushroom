@@ -14,6 +14,7 @@ namespace MyFreshMushroom
         private Vector2Int footprint = new Vector2Int(2, 2);
         [SerializeField] private MushroomData supportedMushroom;
         [SerializeField] private Sprite sprite;
+        [SerializeField, Min(0)] private int constructionCost;
 
         public string Id => id;
         public string DisplayName => displayName;
@@ -21,5 +22,8 @@ namespace MyFreshMushroom
         public Vector2Int Footprint => footprint;
         public MushroomData SupportedMushroom => supportedMushroom;
         public Sprite Sprite => sprite;
+        public int ConstructionCost => constructionCost;
+
+        public Vector2Int GetFootprint(bool flipped) => flipped ? new Vector2Int(footprint.y, footprint.x) : footprint;
     }
 }

@@ -32,6 +32,7 @@ namespace MyFreshMushroom
         [SerializeField] private Sprite groundSprite;
         [SerializeField] private FacilityView facilityPrefab;
         [SerializeField] private InitialFacility[] initialFacilities;
+        [SerializeField] private Vector2Int[] unavailableCells = Array.Empty<Vector2Int>();
         [SerializeField] private AreaPlacement[] areas = Array.Empty<AreaPlacement>();
         [SerializeField] private GameManager session;
         [SerializeField] private ForestCamera forestCamera;
@@ -40,6 +41,11 @@ namespace MyFreshMushroom
 
         private readonly List<FacilityView> facilities = new List<FacilityView>();
         public IReadOnlyList<FacilityView> Facilities => facilities.AsReadOnly();
+        private HashSet<Vector2Int> blockedCells;
+        private GameObject placementPreview;
+        private SpriteRenderer previewBody;
+        private SpriteRenderer previewGrowth;
+        private readonly List<SpriteRenderer> previewTiles = new List<SpriteRenderer>();
         public ForestGrid Grid { get; private set; }
         public FacilitySelection Selection { get; private set; }
         public int TileCount { get; private set; }
@@ -78,7 +84,8 @@ namespace MyFreshMushroom
             var grid = new ForestGrid(size, tileSize);
             var states = new List<FacilityState>();
             var ids = new HashSet<string>();
-            var occupied = new HashSet<Vector2Int>();
+            blockedCells = new HashSet<Vector2Int>(unavailableCells);
+            var occupied = new HashSet<Vector2Int>(blockedCells);
             // Validate the full layout before creating any objects.
             foreach (var entry in initialFacilities)
             {
@@ -139,6 +146,108 @@ namespace MyFreshMushroom
             }
             Selection = new FacilitySelection(states);
             Selection.Changed += RefreshSelection;
+        }
+
+        internal bool CanPlace(FacilityData definition, Vector2Int origin, bool flipped, FacilityState moving)
+        {
+            Vector2Int footprint = definition.GetFootprint(flipped);
+            if (!Grid.ContainsFootprint(origin, footprint)) return false;
+
+            for (int x = 0; x < footprint.x; x++)
+            for (int y = 0; y < footprint.y; y++)
+            {
+                var cell = origin + new Vector2Int(x, y);
+                if (blockedCells.Contains(cell)) return false;
+                foreach (var view in facilities)
+                    if (view.State != moving && view.State.ContainsCell(cell)) return false;
+            }
+            return true;
+        }
+
+        internal void AddFacility(FacilityState state)
+        {
+            var view = Instantiate(facilityPrefab, transform);
+            view.Initialize(state, Grid);
+            facilities.Add(view);
+            Selection.Registered.Add(state);
+        }
+
+        internal void MoveFacility(FacilityState state, Vector2Int origin, bool flipped)
+        {
+            var view = facilities.Find(facility => facility.State == state);
+            state.MoveTo(origin, flipped);
+            view.RefreshPlacement(Grid);
+        }
+
+        internal void SetFacilityVisible(FacilityState state, bool visible)
+        {
+            var view = facilities.Find(facility => facility.State == state);
+            if (view != null) view.gameObject.SetActive(visible);
+        }
+
+        internal void RemoveFacility(FacilityState state)
+        {
+            var view = facilities.Find(facility => facility.State == state);
+            facilities.Remove(view);
+            Selection.Registered.Remove(state);
+            view.gameObject.SetActive(false);
+            Destroy(view.gameObject);
+            if (Selection.Selected == state) Selection.Select(null);
+        }
+
+        internal void ShowPlacementPreview(FacilityData definition, Vector2Int origin, bool flipped, bool valid,
+            Sprite growthSprite)
+        {
+            if (placementPreview == null)
+            {
+                placementPreview = new GameObject("Facility Placement Preview");
+                placementPreview.transform.SetParent(transform, false);
+                previewBody = placementPreview.AddComponent<SpriteRenderer>();
+                previewBody.sortingOrder = 20001;
+                previewBody.color = new Color(1, 1, 1, 0.55f);
+                var growth = new GameObject("Growth", typeof(SpriteRenderer));
+                growth.transform.SetParent(placementPreview.transform, false);
+                previewGrowth = growth.GetComponent<SpriteRenderer>();
+                previewGrowth.sortingOrder = previewBody.sortingOrder + 1;
+                previewGrowth.color = previewBody.color;
+            }
+            placementPreview.SetActive(true);
+            Vector2Int footprint = definition.GetFootprint(flipped);
+            previewBody.sprite = definition.Sprite;
+            previewBody.flipX = flipped;
+            previewGrowth.sprite = growthSprite;
+            previewGrowth.flipX = flipped;
+            previewGrowth.enabled = growthSprite != null;
+            placementPreview.transform.localPosition = Grid.GridToWorld((Vector2)origin + (Vector2)footprint * 0.5f);
+
+            Color tint = valid ? new Color(0.28f, 0.95f, 0.35f, 0.7f) : new Color(1, 0.25f, 0.22f, 0.7f);
+            int index = 0;
+            for (int x = 0; x < footprint.x; x++)
+            for (int y = 0; y < footprint.y; y++)
+            {
+                if (index == previewTiles.Count)
+                {
+                    var tile = new GameObject("Preview Tile", typeof(SpriteRenderer));
+                    tile.transform.SetParent(placementPreview.transform, false);
+                    tile.transform.localScale = new Vector3(tileSize.x / groundSprite.bounds.size.x,
+                        tileSize.y / groundSprite.bounds.size.y, 1) * 0.97f;
+                    var renderer = tile.GetComponent<SpriteRenderer>();
+                    renderer.sprite = groundSprite;
+                    renderer.sortingOrder = 20000;
+                    previewTiles.Add(renderer);
+                }
+                var previewTile = previewTiles[index++];
+                previewTile.transform.localPosition = (Vector3)Grid.CellCenterToWorld(origin + new Vector2Int(x, y))
+                    - placementPreview.transform.localPosition;
+                previewTile.color = tint;
+                previewTile.enabled = true;
+            }
+            for (; index < previewTiles.Count; index++) previewTiles[index].enabled = false;
+        }
+
+        internal void HidePlacementPreview()
+        {
+            if (placementPreview != null) placementPreview.SetActive(false);
         }
 
         private void PresentRestoration(ForestAreaState area)
