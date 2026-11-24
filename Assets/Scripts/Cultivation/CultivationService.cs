@@ -31,6 +31,7 @@ namespace MyFreshMushroom
         public event Action<FacilityState> Inoculated;
         public event Action<FacilityState> Watered;
         public event Action<HarvestResult> Harvested;
+        internal event Action TimeAdvanced;
 
         public CultivationService(InventoryService inventory, IEnumerable<FacilityState> facilities, IGameplayActionRules actionRules = null)
             : this(inventory, new HashSet<FacilityState>(facilities ?? throw new ArgumentNullException(nameof(facilities))), actionRules)
@@ -122,8 +123,14 @@ namespace MyFreshMushroom
             processingAction = true;
             try
             {
+                bool advanced = false;
                 foreach (var facility in facilities)
-                    if (facility != null) facility.Cultivation.Advance(seconds);
+                {
+                    if (facility == null || facility.Cultivation.RemainingSeconds <= 0) continue;
+                    facility.Cultivation.Advance(seconds);
+                    advanced = true;
+                }
+                if (advanced) TimeAdvanced?.Invoke();
             }
             finally { processingAction = false; }
         }

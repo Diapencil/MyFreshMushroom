@@ -59,6 +59,17 @@ namespace MyFreshMushroom
         public GrowthStage Stage { get; private set; }
         public event Action Changed;
 
+        internal void Restore(MushroomData mushroom, long cycle, double elapsed, bool watered)
+        {
+            if (mushroom != null)
+            {
+                Begin(mushroom);
+                if (watered) Water();
+                Advance(elapsed);
+            }
+            CycleNumber = cycle;
+        }
+
         internal void Begin(MushroomData mushroom)
         {
             CycleNumber++;

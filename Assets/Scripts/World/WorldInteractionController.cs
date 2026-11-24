@@ -62,6 +62,11 @@ namespace MyFreshMushroom
                 CancelPlacement();
                 return;
             }
+            if (session.IsSettingsOpen)
+            {
+                pressed = dragged = false;
+                return;
+            }
             if (mouse == null || forest.IsPresentingRestoration)
             {
                 pressed = dragged = false;
@@ -114,7 +119,7 @@ namespace MyFreshMushroom
 
         public void BeginFacilityMove(FacilityState facility)
         {
-            if (!ready || IsPlacingFacility || !session.CanManageFacility(facility)) return;
+            if (!ready || IsPlacingFacility || !session.CanMoveFacility(facility)) return;
             BeginPlacement(facility.Definition, facility);
             forest.SetFacilityVisible(facility, false);
             RefreshPlacementPreview(facility.Origin);
@@ -232,10 +237,14 @@ namespace MyFreshMushroom
 
         public bool TrySelectAtScreenPosition(Vector2 position)
         {
-            if (!ready || !isActiveAndEnabled || forest.IsPresentingRestoration || !CanPointAtWorld(position)) return false;
+            if (!ready || !isActiveAndEnabled || session.IsSettingsOpen
+                || forest.IsPresentingRestoration || !CanPointAtWorld(position)) return false;
 
             if (!TryGetWorldPoint(position, out var worldPosition)) return false;
             if (IsPlacingFacility) return TryCompletePlacement(worldPosition);
+            if (session.Tutorial?.IsMessageOpen == true)
+                return TrySelectTutorialFacility(worldPosition);
+
             FacilityView candidate = null;
             foreach (var hit in Physics2D.OverlapPointAll(worldPosition))
             {
@@ -245,12 +254,8 @@ namespace MyFreshMushroom
                 if (candidate == null || view.SortingOrder > candidate.SortingOrder)
                     candidate = view;
             }
-            var tutorial = session != null ? session.Tutorial : null;
-            if (tutorial != null && tutorial.IsMessageOpen
-                && !ReferenceEquals(candidate != null ? candidate.State : null, tutorial.GuidanceTarget))
-                return false;
             ForestAreaState selectedArea = null;
-            if (candidate == null && !session.IsGameplayPaused)
+            if (candidate == null)
             {
                 var definition = forest.FindAreaAt(worldPosition);
                 if (definition != null) session.ForestAreas.TryGetValue(definition.Id, out selectedArea);
@@ -258,6 +263,25 @@ namespace MyFreshMushroom
             forest.Selection.Select(candidate != null ? candidate.State : null);
             SelectArea(selectedArea);
             return true;
+        }
+
+        private bool TrySelectTutorialFacility(Vector2 worldPosition)
+        {
+            var tutorial = session.Tutorial;
+            var target = tutorial.GuidanceTarget;
+            if (target == null || tutorial.CanContinueMessage) return false;
+
+            foreach (var view in forest.Facilities)
+            {
+                if (!ReferenceEquals(view.State, target) || !view.isActiveAndEnabled) continue;
+                // Match the spotlight: openings in the sprite's physics outline are still within the highlighted shelf.
+                var bounds = view.GetComponent<SpriteRenderer>().bounds;
+                if (worldPosition.x < bounds.min.x || worldPosition.x > bounds.max.x
+                    || worldPosition.y < bounds.min.y || worldPosition.y > bounds.max.y) return false;
+                forest.Selection.Select(target);
+                return true;
+            }
+            return false;
         }
 
         private bool CanPointAtWorld(Vector2 position)

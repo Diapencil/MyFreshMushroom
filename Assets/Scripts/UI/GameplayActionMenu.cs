@@ -184,9 +184,8 @@ namespace MyFreshMushroom
 
             build.gameObject.SetActive(defaultMenu);
             build.interactable = session.CanManageFacilities;
-            bool canManage = facilitySelected && session.CanManageFacility(selectedFacility);
-            moveFacility.gameObject.SetActive(canManage);
-            demolishFacility.gameObject.SetActive(canManage);
+            moveFacility.gameObject.SetActive(facilitySelected && session.CanMoveFacility(selectedFacility));
+            demolishFacility.gameObject.SetActive(facilitySelected && session.CanDemolishFacility(selectedFacility));
             catalogue.gameObject.SetActive(defaultMenu);
             harvest.gameObject.SetActive(facilitySelected && selectedFacility.Cultivation.Stage == GrowthStage.Ready);
             harvest.interactable = facilitySelected && session.Cultivation.CanHarvest(selectedFacility);
@@ -245,7 +244,7 @@ namespace MyFreshMushroom
         private void OpenDemolition()
         {
             var facility = selectedFacility;
-            if (!session.CanManageFacility(facility)) return;
+            if (!session.CanDemolishFacility(facility)) return;
             page = PopupPage.Demolish;
             actions.interactable = false;
             popup.ShowConfirmation("시설 철거", "철거 확정", () =>

@@ -1,10 +1,16 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("MyFreshMushroom.PlayModeTests")]
 
 namespace MyFreshMushroom
 {
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(SaveManager))]
     public sealed class GameManager : MonoBehaviour
     {
         [SerializeField] private MushroomData startingMushroom;
@@ -21,6 +27,15 @@ namespace MyFreshMushroom
         [SerializeField] private ForestAreaData[] forestAreas = System.Array.Empty<ForestAreaData>();
         [SerializeField] private MushroomData[] additionalMushrooms = System.Array.Empty<MushroomData>();
         [SerializeField] private FacilityData[] buildableFacilities = System.Array.Empty<FacilityData>();
+        private bool atTitle;
+
+        internal static bool? TutorialEnabledOverride { get; set; }
+        private bool IsTutorialEnabled => TutorialEnabledOverride ?? enableTutorial;
+        internal SaveManager Saves { get; private set; }
+        internal bool IsAtTitle => atTitle;
+        internal bool IsSettingsOpen { get; set; }
+        internal JourneySaveData PendingJourney { get; private set; }
+        internal event System.Action FacilityLayoutChanged;
 
         public MushroomData StartingMushroom => startingMushroom;
         public InventoryService Inventory { get; private set; }
@@ -35,7 +50,8 @@ namespace MyFreshMushroom
         public bool IsInitialized => Inventory != null;
         public bool IsGameplayPaused => Tutorial != null && Tutorial.IsGameplayPaused;
         public IReadOnlyList<FacilityData> BuildableFacilities => buildableFacilities;
-        public bool CanManageFacilities => IsInitialized && !IsGameplayPaused && !Exploration.IsExploring && !forest.IsPresentingRestoration
+        public bool CanManageFacilities => IsInitialized && !Saves.IsResetting && !IsSettingsOpen
+            && !IsGameplayPaused && !Exploration.IsExploring && !forest.IsPresentingRestoration
             && (Tutorial == null || Tutorial.Step == TutorialStep.Completed);
         internal int LegacyFirstExplorationReward => firstExplorationReward;
 
@@ -47,7 +63,7 @@ namespace MyFreshMushroom
         private void Update()
         {
             // Menus and future exploration screens share this running-session clock.
-            if (!IsInitialized || IsGameplayPaused) return;
+            if (!IsInitialized || Saves.IsResetting || atTitle || IsGameplayPaused) return;
             Exploration.Tick(Time.unscaledDeltaTime);
             Cultivation.Tick(Time.unscaledDeltaTime);
         }
@@ -95,18 +111,30 @@ namespace MyFreshMushroom
                 areaStates.Add(area.Id, new ForestAreaState(area));
             }
 
-            var inventory = new InventoryService(mushroomIds);
-            if (startingMushroomCount > 0)
-                inventory.TryAdd(startingMushroom.Id, ResourceKind.Mushroom, startingMushroomCount);
-            if (startingSpawnCount > 0)
-                inventory.TryAdd(startingMushroom.Id, ResourceKind.Spawn, startingSpawnCount);
-
-            var progress = new ProgressState();
-            progress.TryDiscover(startingMushroom.Id);
-            forest.Initialize();
-            var facilities = new List<FacilityState>();
-            foreach (var view in forest.Facilities) facilities.Add(view.State);
-            if (enableTutorial)
+            var initialFacilities = forest.CreateInitialFacilities();
+            Saves = GetComponent<SaveManager>();
+            var catalogue = mushrooms.ToDictionary(mushroom => mushroom.Id);
+            var definitions = new Dictionary<string, FacilityData>();
+            foreach (var definition in initialFacilities.Select(facility => facility.Definition)
+                .Concat(buildableFacilities ?? System.Array.Empty<FacilityData>()))
+            {
+                if (definition == null || string.IsNullOrWhiteSpace(definition.Id)) continue;
+                if (definitions.TryGetValue(definition.Id, out var previous) && previous != definition)
+                {
+                    Debug.LogError($"Facility definitions must have unique IDs: {definition.Id}", this);
+                    return false;
+                }
+                definitions[definition.Id] = definition;
+            }
+            var restored = Saves.Load(data => data.TryRestore(catalogue, definitions, areaStates.Values, forest,
+                startingMushroom.Id, firstExplorationMushroom.Id, tutorialShelfId, IsTutorialEnabled, out var state)
+                ? state : null);
+            var inventory = restored?.Inventory ?? CreateStartingInventory(mushroomIds);
+            var progress = restored?.Progress ?? CreateStartingProgress();
+            var facilities = restored?.Facilities ?? initialFacilities;
+            areaStates = restored?.Areas ?? areaStates;
+            PendingJourney = restored?.Journey;
+            if (IsTutorialEnabled)
             {
                 FacilityState shelf = null;
                 FacilityState workbench = null;
@@ -119,13 +147,16 @@ namespace MyFreshMushroom
                 }
                 foreach (var recipe in spawnRecipes)
                     if (recipe != null && recipe.Mushroom == startingMushroom) tutorialRecipe = recipe;
-                if (shelf == null || workbench == null || tutorialRecipe == null)
+                if (progress.CurrentTutorialStep < TutorialStep.AwaitFirstExploration && shelf == null
+                    || workbench == null || tutorialRecipe == null)
                 {
                     Debug.LogError("Tutorial requires its starting shelf, spawn workbench and starting mushroom recipe.", this);
                     return false;
                 }
                 Tutorial = new TutorialManager(progress, shelf, workbench, tutorialRecipe);
+                if (restored != null) Tutorial.Restore(restored.Tutorial);
             }
+            forest.Initialize(facilities);
             Cultivation = new CultivationService(inventory, forest.Selection.Registered, Tutorial);
             SpawnProduction = new SpawnProductionService(inventory, progress, spawnRecipes, Tutorial);
             Tutorial?.Bind(Cultivation, SpawnProduction);
@@ -137,8 +168,60 @@ namespace MyFreshMushroom
             Restoration = new ForestRestorationService(inventory, ForestAreas, Tutorial);
             Progress = progress;
             Inventory = inventory;
+            Saves.TrackSession(this, forest, restored != null);
             return true;
         }
+
+        private InventoryService CreateStartingInventory(IEnumerable<string> mushroomIds)
+        {
+            var inventory = new InventoryService(mushroomIds);
+            inventory.TryAdd(startingMushroom.Id, ResourceKind.Mushroom, startingMushroomCount);
+            inventory.TryAdd(startingMushroom.Id, ResourceKind.Spawn, startingSpawnCount);
+            return inventory;
+        }
+
+        private ProgressState CreateStartingProgress()
+        {
+            var progress = new ProgressState();
+            progress.TryDiscover(startingMushroom.Id);
+            return progress;
+        }
+
+        internal void FinishJourneyRestore(bool resumed)
+        {
+            var journey = PendingJourney;
+            PendingJourney = null;
+            if (journey == null || resumed) return;
+            var area = ForestAreas[journey.areaId];
+            if (area.Definition == Exploration.FirstArea && !Progress.FirstExplorationCollected)
+                Tutorial?.RecoverInterruptedFirstExploration();
+            else
+                area.RemainingCooldownSeconds = area.Definition.ExplorationCooldownSeconds;
+            Saves.RequestCheckpoint();
+        }
+
+        internal bool TryReturnToTitle()
+        {
+            if (!Saves.Flush()) return false;
+            atTitle = true;
+            return true;
+        }
+
+        internal void ResumeFromTitle() => atTitle = false;
+
+        internal bool TryRestart()
+        {
+            if (!IsInitialized || gameObject.scene.buildIndex < 0 || !Saves.TryReset(CaptureStartingSnapshot))
+                return false;
+            SceneManager.LoadScene(gameObject.scene.buildIndex);
+            return true;
+        }
+
+        private SessionSaveData CaptureStartingSnapshot() =>
+            SessionSaveData.Capture(CreateStartingInventory(Mushrooms.Select(mushroom => mushroom.Id)),
+                CreateStartingProgress(), forest.CreateInitialFacilities(), Mushrooms,
+                ForestAreas.Values.Select(area => new ForestAreaState(area.Definition)),
+                new TutorialSaveData { messageOpen = IsTutorialEnabled });
 
         public bool IsFacilityUnlocked(FacilityData definition)
         {
@@ -154,16 +237,18 @@ namespace MyFreshMushroom
                 ResourceKind.Mushroom, definition.ConstructionCost);
         }
 
-        public bool CanManageFacility(FacilityState facility)
+        public bool CanMoveFacility(FacilityState facility)
         {
-            return CanManageFacilities && facility != null && facility.Definition.Kind == FacilityKind.CultivationShelf
-                && forest.Selection.Registered.Contains(facility);
+            return CanManageFacilities && facility != null && forest.Selection.Registered.Contains(facility);
         }
+
+        public bool CanDemolishFacility(FacilityState facility) =>
+            CanMoveFacility(facility) && facility.Definition.Kind == FacilityKind.CultivationShelf;
 
         public bool CanPlaceFacility(FacilityData definition, Vector2Int origin, bool flipped, FacilityState moving = null)
         {
             return CanManageFacilities
-                && (moving == null ? CanAffordFacility(definition) : CanManageFacility(moving) && moving.Definition == definition)
+                && (moving == null ? CanAffordFacility(definition) : CanMoveFacility(moving) && moving.Definition == definition)
                 && forest.CanPlace(definition, origin, flipped, moving);
         }
 
@@ -191,13 +276,15 @@ namespace MyFreshMushroom
             if (facility == null || !CanPlaceFacility(facility.Definition, origin, flipped, facility)
                 || Cultivation.IsProcessingAction) return false;
             forest.MoveFacility(facility, origin, flipped);
+            FacilityLayoutChanged?.Invoke();
             return true;
         }
 
         public bool TryDemolishFacility(FacilityState facility)
         {
-            if (!CanManageFacility(facility) || Cultivation.IsProcessingAction) return false;
+            if (!CanDemolishFacility(facility) || Cultivation.IsProcessingAction) return false;
             forest.RemoveFacility(facility);
+            FacilityLayoutChanged?.Invoke();
             return true;
         }
 

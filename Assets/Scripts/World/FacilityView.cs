@@ -1,8 +1,9 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MyFreshMushroom
 {
-    [RequireComponent(typeof(SpriteRenderer), typeof(BoxCollider2D), typeof(LineRenderer))]
+    [RequireComponent(typeof(SpriteRenderer), typeof(PolygonCollider2D), typeof(LineRenderer))]
     public sealed class FacilityView : MonoBehaviour
     {
         public FacilityState State { get; private set; }
@@ -45,11 +46,7 @@ namespace MyFreshMushroom
             body.flipX = State.IsFlipped;
             // Lower ground anchors draw in front; picking uses the same order.
             body.sortingOrder = 1000 - Mathf.RoundToInt(centre.y * 100);
-            var collider = GetComponent<BoxCollider2D>();
-            Vector2 offset = body.sprite.bounds.center;
-            if (body.flipX) offset.x = -offset.x;
-            collider.offset = offset;
-            collider.size = body.sprite.bounds.size;
+            RefreshClickShape(body.sprite, body.flipX);
 
             outline.sortingOrder = body.sortingOrder - 1;
             outline.SetPosition(0, grid.GridToWorld(origin) - centre);
@@ -58,6 +55,35 @@ namespace MyFreshMushroom
             outline.SetPosition(3, grid.GridToWorld(origin + new Vector2(0, size.y)) - centre);
             growthOverlay.sortingOrder = body.sortingOrder + 1;
             growthOverlay.flipX = State.IsFlipped;
+        }
+
+        private void RefreshClickShape(Sprite sprite, bool flipped)
+        {
+            var collider = GetComponent<PolygonCollider2D>();
+            int shapeCount = sprite.GetPhysicsShapeCount();
+            var points = new List<Vector2>();
+            collider.pathCount = Mathf.Max(1, shapeCount);
+            if (shapeCount == 0)
+            {
+                // Preserve selection for sprites imported without a physics shape.
+                Bounds bounds = sprite.bounds;
+                points.Add(new Vector2(bounds.min.x, bounds.min.y));
+                points.Add(new Vector2(bounds.min.x, bounds.max.y));
+                points.Add(new Vector2(bounds.max.x, bounds.max.y));
+                points.Add(new Vector2(bounds.max.x, bounds.min.y));
+            }
+
+            for (int path = 0; path < collider.pathCount; path++)
+            {
+                if (shapeCount > 0) sprite.GetPhysicsShape(path, points);
+                if (flipped)
+                {
+                    for (int i = 0; i < points.Count; i++)
+                        points[i] = new Vector2(-points[i].x, points[i].y);
+                    points.Reverse();
+                }
+                collider.SetPath(path, points);
+            }
         }
 
         public void SetSelected(bool selected)

@@ -21,7 +21,7 @@ MonoBehaviour:
   wateredHarvestYield: 5
   growthStageWeights: {x: 1, y: 1, z: 1}
   growthStageSprites:
-  - {fileID: 21300000, guid: 1950fe7faec8e79438fb8b34d36a17c6, type: 3}
-  - {fileID: 21300000, guid: 3a49338682e6637479473f253c80c58d, type: 3}
-  - {fileID: 21300000, guid: 5f73d211a9d0c0c478ed4819a3c0e7a4, type: 3}
-  - {fileID: 21300000, guid: 39ff9cb67cce61c438a4f22f7d825a99, type: 3}
+  - {fileID: 21300000, guid: 77cfb337ecbbd864c8bb3b215a22f99a, type: 3}
+  - {fileID: 21300000, guid: 141de13d2be263948880da2be9404465, type: 3}
+  - {fileID: 21300000, guid: 9e68dd719bd3335499ab00784bd32e54, type: 3}
+  - {fileID: 21300000, guid: 127742e11f35f894b8c7f5a5f6749638, type: 3}

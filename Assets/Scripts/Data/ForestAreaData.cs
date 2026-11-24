@@ -39,6 +39,19 @@ namespace MyFreshMushroom
             return prefab != null;
         }
 
+        internal ExplorationMap FindExplorationMap(string mapId)
+        {
+            if (explorationMapPrefabs == null || string.IsNullOrWhiteSpace(mapId)) return null;
+            ExplorationMap match = null;
+            foreach (var prefab in ExplorationMapPrefabs)
+            {
+                if (prefab == null || !prefab.TryGetComponent<ExplorationMap>(out var map) || map.SaveId != mapId) continue;
+                if (match != null) return null;
+                match = map;
+            }
+            return match;
+        }
+
         [Serializable]
         public sealed class RestorationStage
         {

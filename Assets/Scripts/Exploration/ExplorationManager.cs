@@ -71,6 +71,15 @@ namespace MyFreshMushroom
             Refresh();
         }
 
+        private void Start()
+        {
+            if (session == null || session.PendingJourney == null) return;
+            var journey = session.PendingJourney;
+            var area = session.ForestAreas[journey.areaId];
+            bool resumed = exploration != null && OpenMap(area, area.Definition.FindExplorationMap(journey.mapId), journey);
+            session.FinishJourneyRestore(resumed);
+        }
+
         public void Enter()
         {
             if (exploration == null || activeMap != null || forest.IsPresentingRestoration) return;
@@ -83,19 +92,27 @@ namespace MyFreshMushroom
                 return;
             }
 
+            OpenMap(area, mapPrefab, null);
+        }
+
+        private bool OpenMap(ForestAreaState area, ExplorationMap mapPrefab, JourneySaveData journey)
+        {
+            if (mapPrefab == null) return false;
             activeMap = Instantiate(mapPrefab, forest.transform.position, Quaternion.identity, transform);
             if (!activeMap.Prepare(exploration.FirstMushroom, session.LegacyFirstExplorationReward))
             {
-                Debug.LogError($"Invalid exploration map configuration: {prefab.name}.", prefab);
+                Debug.LogError($"Invalid exploration map configuration: {mapPrefab.name}.", mapPrefab);
                 RemoveMap();
-                return;
+                return false;
             }
             lastReward = null;
-            if (!exploration.TryEnter(area, activeMap.Targets))
+            bool entered = journey == null ? exploration.TryEnter(area, activeMap.Targets, mapPrefab.SaveId)
+                : exploration.TryResume(area, activeMap.Targets, journey);
+            if (!entered)
             {
-                Debug.LogError($"Exploration map contains invalid or unregistered mushroom targets: {prefab.name}.", prefab);
+                Debug.LogError($"Exploration map contains invalid or unregistered mushroom targets: {mapPrefab.name}.", mapPrefab);
                 RemoveMap();
-                return;
+                return false;
             }
 
             savedPosition = worldCamera.transform.position;
@@ -111,6 +128,7 @@ namespace MyFreshMushroom
             worldCamera.backgroundColor = new Color(0.07f, 0.13f, 0.10f);
             pressed = dragged = false;
             Refresh();
+            return true;
         }
 
         private void Return()
@@ -176,7 +194,11 @@ namespace MyFreshMushroom
         private void Update()
         {
             if (activeMap == null || !exploration.IsExploring || Mouse.current == null) return;
-            if (session.IsGameplayPaused || exploration.IsExitConfirmationOpen) { pressed = dragged = false; return; }
+            if (session.IsSettingsOpen || session.IsGameplayPaused || exploration.IsExitConfirmationOpen)
+            {
+                pressed = dragged = false;
+                return;
+            }
             var mouse = Mouse.current;
             Vector2 point = mouse.position.ReadValue();
             bool overUi = IsOverUi(point);

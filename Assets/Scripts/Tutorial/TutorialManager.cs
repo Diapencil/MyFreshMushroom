@@ -39,12 +39,33 @@ namespace MyFreshMushroom
             && shelf.Cultivation.Stage != GrowthStage.Ready || Step == TutorialStep.WateringComplete
             || Step >= TutorialStep.AwaitFirstExploration);
         public event Action Changed;
+        internal event Action ProgressChanged;
+
+        internal TutorialSaveData Capture() => new TutorialSaveData
+        {
+            step = Step,
+            messageOpen = IsMessageOpen,
+            waterMessageShown = waterMessageShown,
+            harvestMessageShown = harvestMessageShown,
+            expectedCycle = expectedCycle,
+            expectedYield = expectedYield
+        };
+
+        internal void Restore(TutorialSaveData saved)
+        {
+            IsMessageOpen = saved.messageOpen;
+            waterMessageShown = saved.waterMessageShown;
+            harvestMessageShown = saved.harvestMessageShown;
+            expectedCycle = saved.expectedCycle;
+            expectedYield = saved.expectedYield;
+        }
 
         public TutorialManager(ProgressState progress, FacilityState shelf,
             FacilityState workbench, SpawnRecipeData recipe)
         {
             this.progress = progress ?? throw new ArgumentNullException(nameof(progress));
-            this.shelf = shelf ?? throw new ArgumentNullException(nameof(shelf));
+            if (shelf == null && RestrictsActions) throw new ArgumentNullException(nameof(shelf));
+            this.shelf = shelf;
             this.workbench = workbench ?? throw new ArgumentNullException(nameof(workbench));
             this.recipe = recipe ?? throw new ArgumentNullException(nameof(recipe));
         }
@@ -58,7 +79,7 @@ namespace MyFreshMushroom
             cultivation.Watered += OnWatered;
             cultivation.Harvested += OnHarvested;
             production.Produced += OnProduced;
-            shelf.Cultivation.Changed += OnCropChanged;
+            if (shelf != null) shelf.Cultivation.Changed += OnCropChanged;
         }
 
         public FacilityState GuidanceTarget => !RestrictsActions ? null
@@ -79,6 +100,7 @@ namespace MyFreshMushroom
             }
             IsMessageOpen = false;
             NotifyChanged();
+            ProgressChanged?.Invoke();
         }
 
         public bool AllowsEnteringExploration() => !IsMessageOpen && Step >= TutorialStep.AwaitFirstExploration;
@@ -95,6 +117,12 @@ namespace MyFreshMushroom
         private void OnExplorationEntered()
         {
             if (Step == TutorialStep.AwaitFirstExploration) SetStep(TutorialStep.FirstExploration);
+        }
+
+        internal void RecoverInterruptedFirstExploration()
+        {
+            if (Step == TutorialStep.FirstExploration || Step == TutorialStep.FindFirstMushroom)
+                SetStep(TutorialStep.AwaitFirstExploration);
         }
 
         private void OnExplorationCollected(string mushroomId, int quantity)
@@ -186,6 +214,7 @@ namespace MyFreshMushroom
             IsMessageOpen = step != TutorialStep.WaterSecondCrop && step != TutorialStep.FindFirstMushroom
                 && (step != TutorialStep.SecondHarvest || shelf.Cultivation.Stage == GrowthStage.Ready);
             NotifyChanged();
+            ProgressChanged?.Invoke();
         }
 
         private void OnCropChanged()
@@ -254,7 +283,7 @@ namespace MyFreshMushroom
                 exploration.Entered -= OnExplorationEntered;
                 exploration.Collected -= OnExplorationCollected;
             }
-            shelf.Cultivation.Changed -= OnCropChanged;
+            if (shelf != null) shelf.Cultivation.Changed -= OnCropChanged;
             cultivation = null;
             production = null;
             exploration = null;

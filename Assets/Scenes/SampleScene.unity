@@ -129,6 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1000101}
   - component: {fileID: 1000102}
+  - component: {fileID: 1000103}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -168,7 +169,7 @@ MonoBehaviour:
   startingSpawnCount: 3
   forest: {fileID: 1208591388}
   spawnRecipeDatabase: {fileID: 11400000, guid: c2ce7faf826e4cfb85a8c619258cb306, type: 2}
-  enableTutorial: 0
+  enableTutorial: 1
   tutorialShelfId: starting-oyster-shelf
   firstExplorationMushroom: {fileID: 11400000, guid: fe429714500746a7bdb3a66f1537d784, type: 2}
   firstExplorationArea: {fileID: 11400000, guid: 1a1c42340b2ff8ef581a322000000000, type: 2}
@@ -181,6 +182,19 @@ MonoBehaviour:
   buildableFacilities:
   - {fileID: 11400000, guid: 6209184bfb9cfac47893100bf8fd6b10, type: 2}
   - {fileID: 11400000, guid: 3e3fed2b387d4dd9b0eae87954a85e86, type: 2}
+--- !u!114 &1000103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4abff921170945aab7442ba2a4aba6a0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: MyFreshMushroom.Runtime::MyFreshMushroom.SaveManager
+  autosaveIntervalSeconds: 120
 --- !u!1 &1000200
 GameObject:
   m_ObjectHideFlags: 0
@@ -217,6 +231,7 @@ RectTransform:
   - {fileID: 6000001}
   - {fileID: 7000001}
   - {fileID: 4557272595128895241}
+  - {fileID: 610000031}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -287,6 +302,28 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!1001 &610000030
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1000201}
+    m_Modifications:
+    - target: {fileID: 610000005, guid: 64ea061f2f8246a9a5a80e5eda00351c, type: 3}
+      propertyPath: session
+      value:
+      objectReference: {fileID: 1000102}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 64ea061f2f8246a9a5a80e5eda00351c, type: 3}
+--- !u!224 &610000031 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 610000002, guid: 64ea061f2f8246a9a5a80e5eda00351c, type: 3}
+  m_PrefabInstance: {fileID: 610000030}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &1000301 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5314588688538350032, guid: aa8b1e62c96efb54cabc5e36a52de4e5, type: 3}

@@ -101,6 +101,14 @@ namespace MyFreshMushroom
 
         public void SetConfirmationInteractable(bool value) => confirm.interactable = value;
 
+        internal void HideCloseButton(bool hideCancel = false)
+        {
+            close.gameObject.SetActive(false);
+            cancel.gameObject.SetActive(!hideCancel);
+            if (EventSystem.current != null)
+                EventSystem.current.SetSelectedGameObject(hideCancel ? confirm.gameObject : cancel.gameObject);
+        }
+
         public void ShowContent(string heading, float height)
         {
             if (content == null)
@@ -116,6 +124,8 @@ namespace MyFreshMushroom
         private void Show(string heading, float height)
         {
             Hide();
+            close.gameObject.SetActive(true);
+            cancel.gameObject.SetActive(true);
             title.text = heading;
             window.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
             scrollArea.gameObject.SetActive(true);

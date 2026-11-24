@@ -76,31 +76,52 @@ namespace MyFreshMushroom
 
         public void Initialize()
         {
-            if (Selection != null)
-                return;
+            if (Selection != null) return;
+            // Camera and HUD initialization can ask for the grid before this component's Awake.
+            if (session != null) session.Initialize();
+            else Initialize(CreateInitialFacilities());
+        }
+
+        internal List<FacilityState> CreateInitialFacilities()
+        {
             if (groundSprite == null || facilityPrefab == null || initialFacilities == null)
                 throw new InvalidOperationException("Forest requires a ground sprite, facility prefab and initial placements.");
 
-            var grid = new ForestGrid(size, tileSize);
             var states = new List<FacilityState>();
-            var ids = new HashSet<string>();
-            blockedCells = new HashSet<Vector2Int>(unavailableCells);
-            var occupied = new HashSet<Vector2Int>(blockedCells);
-            // Validate the full layout before creating any objects.
             foreach (var entry in initialFacilities)
             {
-                if (entry == null || entry.definition == null || entry.definition.Sprite == null
-                    || (entry.definition.Kind == FacilityKind.CultivationShelf && entry.definition.SupportedMushroom == null)
-                    || !ids.Add(entry.instanceId) || !grid.ContainsFootprint(entry.origin, entry.definition.Footprint))
-                    throw new InvalidOperationException("Initial facility data or footprint is invalid.");
-                var state = new FacilityState(entry.instanceId, entry.definition, entry.origin);
-                states.Add(state);
-                for (int x = 0; x < entry.definition.Footprint.x; x++)
-                for (int y = 0; y < entry.definition.Footprint.y; y++)
-                    if (!occupied.Add(entry.origin + new Vector2Int(x, y)))
-                        throw new InvalidOperationException("Initial facilities overlap.");
+                if (entry == null) throw new InvalidOperationException("Initial facility data is missing.");
+                states.Add(new FacilityState(entry.instanceId, entry.definition, entry.origin));
             }
+            if (!IsValidLayout(states)) throw new InvalidOperationException("Initial facility layout is invalid.");
+            return states;
+        }
 
+        internal bool IsValidLayout(List<FacilityState> states)
+        {
+            var grid = new ForestGrid(size, tileSize);
+            var ids = new HashSet<string>();
+            var occupied = new HashSet<Vector2Int>(unavailableCells);
+            foreach (var state in states)
+            {
+                var definition = state.Definition;
+                var footprint = state.Footprint;
+                if (definition.Sprite == null
+                    || definition.Kind == FacilityKind.CultivationShelf && definition.SupportedMushroom == null
+                    || !ids.Add(state.InstanceId) || !grid.ContainsFootprint(state.Origin, footprint))
+                    return false;
+                for (int x = 0; x < footprint.x; x++)
+                for (int y = 0; y < footprint.y; y++)
+                    if (!occupied.Add(state.Origin + new Vector2Int(x, y))) return false;
+            }
+            return true;
+        }
+
+        internal void Initialize(List<FacilityState> states)
+        {
+            if (Selection != null) return;
+            var grid = new ForestGrid(size, tileSize);
+            blockedCells = new HashSet<Vector2Int>(unavailableCells);
             Grid = grid;
             float centreCoordinate = grid.MinCellCoordinate + size * 0.5f;
             MapBounds = new Bounds(transform.TransformPoint(grid.GridToWorld(Vector2.one * centreCoordinate)), tileSize * size);

@@ -17,6 +17,8 @@ namespace MyFreshMushroom
         public MushroomData FirstMushroom => mushrooms[MushroomId];
         public ForestAreaData FirstArea { get; }
         public ForestAreaState ActiveArea { get; private set; }
+        internal string ActiveMapId { get; private set; }
+        internal IEnumerable<string> CollectedTargetIds => collectedTargets;
         public bool IsExploring => ActiveArea != null;
         public bool IsCollected => progress.FirstExplorationCollected;
         public int TargetCount => targets.Count;
@@ -27,6 +29,8 @@ namespace MyFreshMushroom
         public event Action Changed;
         public event Action CooldownChanged;
         public event Action<string, int> Collected;
+        internal event Action JourneyChanged;
+        internal event Action TimeAdvanced;
 
         public ExplorationService(InventoryService inventory, ProgressState progress, ForestAreaData firstArea,
             string mushroomId, IEnumerable<MushroomData> catalogue, IReadOnlyDictionary<string, ForestAreaState> areas,
@@ -51,9 +55,19 @@ namespace MyFreshMushroom
             && (actionRules == null || actionRules.AllowsEnteringExploration()
                 && (IsCollected || area.Definition == FirstArea));
 
-        public bool TryEnter(ForestAreaState area, IReadOnlyList<ExplorationTarget> mapTargets)
+        public bool TryEnter(ForestAreaState area, IReadOnlyList<ExplorationTarget> mapTargets) =>
+            TryEnter(area, mapTargets, null);
+
+        internal bool TryEnter(ForestAreaState area, IReadOnlyList<ExplorationTarget> mapTargets, string mapId) =>
+            CanEnter(area) && BeginJourney(area, mapTargets, mapId, null);
+
+        internal bool TryResume(ForestAreaState area, IReadOnlyList<ExplorationTarget> mapTargets, JourneySaveData saved) =>
+            BeginJourney(area, mapTargets, saved.mapId, saved.collectedTargetIds);
+
+        private bool BeginJourney(ForestAreaState area, IReadOnlyList<ExplorationTarget> mapTargets,
+            string mapId, string[] previousTargets)
         {
-            if (!CanEnter(area) || mapTargets == null || mapTargets.Count == 0) return false;
+            if (mapTargets == null || mapTargets.Count == 0) return false;
             var pending = new Dictionary<string, ExplorationTarget>();
             bool hasFirstMushroom = false;
             foreach (var target in mapTargets)
@@ -65,12 +79,18 @@ namespace MyFreshMushroom
                 hasFirstMushroom |= target.Mushroom.Id == MushroomId;
             }
             if (area.Definition == FirstArea && !IsCollected && !hasFirstMushroom) return false;
+            if (previousTargets != null)
+                foreach (var id in previousTargets)
+                    if (!pending.ContainsKey(id)) return false;
             targets.Clear();
             foreach (var pair in pending) targets.Add(pair.Key, pair.Value);
             collectedTargets.Clear();
+            if (previousTargets != null) collectedTargets.UnionWith(previousTargets);
             ActiveArea = area;
-            if (area.Definition == FirstArea) Entered?.Invoke();
+            ActiveMapId = mapId;
+            if (previousTargets == null && area.Definition == FirstArea) Entered?.Invoke();
             Changed?.Invoke();
+            JourneyChanged?.Invoke();
             return true;
         }
 
@@ -79,24 +99,29 @@ namespace MyFreshMushroom
             if (!IsExploring || collecting) return;
             ActiveArea.RemainingCooldownSeconds = ActiveArea.Definition.ExplorationCooldownSeconds;
             ActiveArea = null;
+            ActiveMapId = null;
             IsExitConfirmationOpen = false;
             targets.Clear();
             collectedTargets.Clear();
             Changed?.Invoke();
+            JourneyChanged?.Invoke();
         }
 
         public void Tick(double seconds)
         {
             if (collecting || !double.IsFinite(seconds) || seconds <= 0 || actionRules?.IsGameplayPaused == true) return;
             bool displayChanged = false;
+            bool advanced = false;
             foreach (var area in areas.Values)
             {
                 double previous = area.RemainingCooldownSeconds;
                 if (previous <= 0) continue;
                 area.RemainingCooldownSeconds = Math.Max(0, previous - seconds);
+                advanced = true;
                 displayChanged |= Math.Ceiling(previous) != Math.Ceiling(area.RemainingCooldownSeconds);
             }
             if (displayChanged) CooldownChanged?.Invoke();
+            if (advanced) TimeAdvanced?.Invoke();
         }
 
         public bool RequestLeave()

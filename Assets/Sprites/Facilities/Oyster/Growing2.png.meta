@@ -1,40 +1,40 @@
 fileFormatVersion: 2
-guid: 3a49338682e6637479473f253c80c58d
+guid: 141de13d2be263948880da2be9404465
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2065504444107736561
-    second: Growing02_0
+      213: -6060739831708070957
+    second: g2_0
   - first:
-      213: -2479013182415113950
-    second: Growing02_1
+      213: 3434851167938845993
+    second: g2_1
   - first:
-      213: -3148184638816708673
-    second: Growing02_2
+      213: -3954439174699903597
+    second: g2_2
   - first:
-      213: 6817536431042013504
-    second: Growing02_3
+      213: 3084514079261927435
+    second: g2_3
   - first:
-      213: -5404097059735880886
-    second: Growing02_4
+      213: -6994896800981145992
+    second: g2_4
   - first:
-      213: 66237431726398317
-    second: Growing02_5
+      213: -676462068661374426
+    second: g2_5
   - first:
-      213: 6147242790671426215
-    second: Growing02_6
+      213: 8189154317478396039
+    second: g2_6
   - first:
-      213: 258588868262740294
-    second: Growing02_7
+      213: -726992961858968567
+    second: g2_7
   - first:
-      213: -1693120040769132661
-    second: Growing02_8
+      213: 5996346381216702477
+    second: g2_8
   - first:
-      213: -4985244451067291285
-    second: Growing02_9
+      213: -4179373219877309
+    second: g2_9
   - first:
-      213: 205627585239005985
-    second: Growing02_10
+      213: -1005573893821243506
+    second: g2_10
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -81,7 +81,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 9
   spritePivot: {x: 0.455, y: 0.375}
-  spritePixelsToUnits: 380
+  spritePixelsToUnits: 390
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -143,7 +143,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Growing02_0
+      name: g2_0
       rect:
         serializedVersion: 2
         x: 315
@@ -158,14 +158,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1f5480139552aac10800000000000000
-      internalID: 2065504444107736561
+      spriteID: 3dbcaf6fb3de3eba0800000000000000
+      internalID: -6060739831708070957
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Growing02_1
+      name: g2_1
       rect:
         serializedVersion: 2
         x: 500
@@ -180,14 +180,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 221f2ac15a6c89dd0800000000000000
-      internalID: -2479013182415113950
+      spriteID: 92d945940fa0baf20800000000000000
+      internalID: 3434851167938845993
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Growing02_2
+      name: g2_2
       rect:
         serializedVersion: 2
         x: 664
@@ -202,14 +202,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: fb71df330c66f44d0800000000000000
-      internalID: -3148184638816708673
+      spriteID: 3959f1aa5820f19c0800000000000000
+      internalID: -3954439174699903597
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Growing02_3
+      name: g2_3
       rect:
         serializedVersion: 2
         x: 767
@@ -224,14 +224,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0492b8f5341cc9e50800000000000000
-      internalID: 6817536431042013504
+      spriteID: b08291f66356eca20800000000000000
+      internalID: 3084514079261927435
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Growing02_4
+      name: g2_4
       rect:
         serializedVersion: 2
         x: 231
@@ -246,14 +246,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a4bb5b63b5ac005b0800000000000000
-      internalID: -5404097059735880886
+      spriteID: 876a0098b622dee90800000000000000
+      internalID: -6994896800981145992
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Growing02_5
+      name: g2_5
       rect:
         serializedVersion: 2
         x: 484
@@ -268,14 +268,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d6bd2ecd7925be000800000000000000
-      internalID: 66237431726398317
+      spriteID: 622b9652559bc96f0800000000000000
+      internalID: -676462068661374426
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Growing02_6
+      name: g2_6
       rect:
         serializedVersion: 2
         x: 658
@@ -290,14 +290,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 7a22d06afb46f4550800000000000000
-      internalID: 6147242790671426215
+      spriteID: 7800828b678b5a170800000000000000
+      internalID: 8189154317478396039
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Growing02_7
+      name: g2_7
       rect:
         serializedVersion: 2
         x: 381
@@ -312,14 +312,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 641cba3a431b69300800000000000000
-      internalID: 258588868262740294
+      spriteID: 904ef22c0c339e5f0800000000000000
+      internalID: -726992961858968567
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Growing02_8
+      name: g2_8
       rect:
         serializedVersion: 2
         x: 554
@@ -334,14 +334,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b876cdf1b44d088e0800000000000000
-      internalID: -1693120040769132661
+      spriteID: d00ee92834d473350800000000000000
+      internalID: 5996346381216702477
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Growing02_9
+      name: g2_9
       rect:
         serializedVersion: 2
         x: 761
@@ -356,14 +356,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b6995afa59ad0dab0800000000000000
-      internalID: -4985244451067291285
+      spriteID: 34e68d7d1e621fff0800000000000000
+      internalID: -4179373219877309
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Growing02_10
+      name: g2_10
       rect:
         serializedVersion: 2
         x: 915
@@ -378,8 +378,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 12b313603398ad200800000000000000
-      internalID: 205627585239005985
+      spriteID: e8fd06f0fdb7b02f0800000000000000
+      internalID: -1005573893821243506
       vertices: []
       indices: 
       edges: []
@@ -398,17 +398,17 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Growing02_0: 2065504444107736561
-      Growing02_1: -2479013182415113950
-      Growing02_10: 205627585239005985
-      Growing02_2: -3148184638816708673
-      Growing02_3: 6817536431042013504
-      Growing02_4: -5404097059735880886
-      Growing02_5: 66237431726398317
-      Growing02_6: 6147242790671426215
-      Growing02_7: 258588868262740294
-      Growing02_8: -1693120040769132661
-      Growing02_9: -4985244451067291285
+      g2_0: -6060739831708070957
+      g2_1: 3434851167938845993
+      g2_10: -1005573893821243506
+      g2_2: -3954439174699903597
+      g2_3: 3084514079261927435
+      g2_4: -6994896800981145992
+      g2_5: -676462068661374426
+      g2_6: 8189154317478396039
+      g2_7: -726992961858968567
+      g2_8: 5996346381216702477
+      g2_9: -4179373219877309
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

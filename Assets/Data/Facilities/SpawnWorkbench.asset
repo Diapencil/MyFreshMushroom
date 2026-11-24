@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: SpawnWorkbench
   m_EditorClassIdentifier: MyFreshMushroom.Runtime::MyFreshMushroom.FacilityData
   id: spawn-workbench
-  displayName: 종균 배양대
+  displayName: "\uC885\uADE0 \uBC30\uC591\uB300"
   kind: 1
-  footprint: {x: 3, y: 2}
+  footprint: {x: 2, y: 2}
   supportedMushroom: {fileID: 0}
-  sprite: {fileID: 21300000, guid: 757935993b874e62aab67a86ece4d7f8, type: 3}
+  sprite: {fileID: 21300000, guid: 78371311856e84343b7a60a23239d01d, type: 3}
+  constructionCost: 0

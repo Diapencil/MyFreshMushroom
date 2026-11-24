@@ -34,6 +34,7 @@ namespace MyFreshMushroom
                 new ExplorationTarget(id, mushroom, firstDiscoveryYield, repeatExplorationYield, hint);
         }
 
+        [SerializeField] private string saveId;
         [SerializeField] private Tilemap ground;
         [SerializeField] private Vector2 cameraSize = new Vector2(10, 5);
         [SerializeField] private SpriteRenderer firstDiscoveryTarget;
@@ -47,6 +48,16 @@ namespace MyFreshMushroom
         public IReadOnlyList<Collectible> Collectibles => collectibles;
         public IReadOnlyList<ExplorationTarget> Targets => targets;
         public Bounds CameraBounds => new Bounds(transform.position, cameraSize);
+        internal string SaveId => saveId;
+
+        internal bool HasTargetId(string targetId)
+        {
+            if (collectibles == null || collectibles.Length == 0)
+                return firstDiscoveryTarget != null && targetId == "first-mushroom";
+            foreach (var item in collectibles)
+                if (item != null && item.Id == targetId) return true;
+            return false;
+        }
 
         internal bool Prepare(MushroomData legacyFirstMushroom, int legacyFirstReward)
         {

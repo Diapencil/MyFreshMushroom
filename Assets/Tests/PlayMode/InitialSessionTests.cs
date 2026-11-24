@@ -10,6 +10,12 @@ namespace MyFreshMushroom.Tests
 {
     public sealed class InitialSessionTests
     {
+        [SetUp]
+        public void IsolateStorage() => SaveManager.SaveDirectoryOverride = "";
+
+        [TearDown]
+        public void RestoreStorage() => SaveManager.SaveDirectoryOverride = null;
+
         [UnityTest]
         public IEnumerator SceneStartsWithThreeSpawnAndPanelTracksSuccessfulChanges()
         {

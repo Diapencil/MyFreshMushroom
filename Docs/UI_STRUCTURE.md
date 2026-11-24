@@ -6,6 +6,7 @@ UI의 모양과 기본 배치는 프리팹에서 정의하고, C#은 데이터 �
 
 - `Assets/Prefabs/UI/HUD/ContextActions.prefab`: 하단 행동 메뉴. 모든 행동 버튼과 FacilityPanel을 포함한다.
 - `Assets/Prefabs/UI/HUD/InventoryPanel.prefab`: 발견한 버섯의 보유량 표시.
+- `Assets/Prefabs/UI/HUD/SettingsMenu.prefab`에는 설정 버튼과 설정·초기화·타이틀에 사용하는 팝업이 있다.
 - `Assets/Prefabs/UI/Popups/InformationPopup.prefab`: 시설·구역·탐험 정보, 도감, 복원 확인, 탐험 종료 확인에 재사용하는 팝업.
 - `Assets/Prefabs/UI/Popups/ProductionPopup.prefab`: 종균 배양 전용 팝업. 제작 콘텐츠를 Popup Window 안에 고정한다.
 - `Assets/Prefabs/UI/Elements/RecipeButton.prefab`: 제작 가능한 레시피마다 복제하는 버튼.
@@ -21,6 +22,8 @@ UI의 모양과 기본 배치는 프리팹에서 정의하고, C#은 데이터 �
 SampleScene의 Gameplay Canvas에 UI 프리팹 인스턴스를 배치한다. GameManager, Forest, 카메라 등 씬 오브젝트 참조는 인스턴스의 Inspector 오버라이드로 연결한다. 프리팹 에셋의 해당 참조가 비어 있는 것은 정상이다.
 
 World Input의 GameplayActionMenu는 하단 메뉴와 두 팝업을 참조한다. OnEnable에서 클릭 및 상태 변경 이벤트를 연결하고 OnDisable에서 해제한다. UI를 다시 만들거나 버튼의 부모를 변경하지 않는다.
+
+SettingsMenu는 Gameplay Canvas 아래에 배치한다. 설정 버튼과 중첩된 InformationPopup은 프리팹에서 편집하고, 씬 인스턴스의 Session 필드는 Game Manager에 연결한다. 설정의 하위 Canvas는 튜토리얼 중에도 버튼을 누를 수 있도록 정렬 순서를 1로 둔다.
 
 FacilityPanel은 Context Actions에 붙어 종균 심기·물 주기 버튼과 시설 정보 문자열을 관리한다. 숨겨진 Text를 정보 저장용으로 사용하지 않는다.
 
