@@ -5,14 +5,13 @@ namespace MyFreshMushroom
 {
     public sealed class SessionSettingsMenu : MonoBehaviour
     {
-        private const string ResetWarning = "현재까지의 진행 상황이 모두 삭제되며, 처음부터 다시 시작합니다.\n\n"
+        internal const string ResetWarning = "현재까지의 진행 상황이 모두 삭제되며, 처음부터 다시 시작합니다.\n\n"
             + "삭제된 데이터는 복구할 수 없습니다.";
         [SerializeField] private GameManager session;
         [SerializeField] private Button settingsButton;
         [SerializeField] private GameplayPopup popup;
 
         private readonly KoreanUiFont font = new KoreanUiFont();
-        private bool atTitle;
 
         private void OnEnable()
         {
@@ -53,16 +52,12 @@ namespace MyFreshMushroom
                 popup.SetText("진행 상황을 저장하지 못했습니다. 다시 시도해 주세요.");
                 return;
             }
-            atTitle = true;
-            popup.ShowConfirmation("My Fresh Mushroom", "이어하기", Close);
-            popup.HideCloseButton(hideCancel: true);
-            popup.SetSecondaryAction("종료", () => Application.Quit(), true);
+            popup.SetSecondaryAction("타이틀로 돌아가기", ReturnToTitle, false);
+            popup.SetConfirmationInteractable(false);
         }
 
         private void Close()
         {
-            if (atTitle) session.ResumeFromTitle();
-            atTitle = false;
             session.IsSettingsOpen = false;
             popup.Hide();
         }

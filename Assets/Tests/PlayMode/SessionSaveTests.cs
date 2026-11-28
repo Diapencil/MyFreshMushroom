@@ -174,6 +174,28 @@ namespace MyFreshMushroom.Tests
         }
 
         [UnityTest]
+        public IEnumerator TitleStartsANewGameWithoutAnExistingSave()
+        {
+            Assert.That(SceneUtility.GetScenePathByBuildIndex(0), Is.EqualTo("Assets/Scenes/TitleScene.unity"));
+            yield return SceneManager.LoadSceneAsync(GameManager.TitleScene);
+            yield return null;
+
+            var background = GameObject.Find("Background").GetComponent<Image>();
+            Assert.That(background.sprite, Is.Not.Null);
+            Assert.That(TitleButton("Continue").interactable, Is.False);
+            TitleButton("Settings").onClick.Invoke();
+            Assert.That(GameObject.Find("Popup Backdrop"), Is.Not.Null);
+            GameObject.Find("Cancel Confirmation").GetComponent<Button>().onClick.Invoke();
+            TitleButton("New Game").onClick.Invoke();
+
+            Assert.That(SceneFade.IsRunning, Is.True);
+            Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo(GameManager.TitleScene));
+            yield return FinishTransitionTo(GameManager.MainScene);
+            Assert.That(Session.Tutorial.Step, Is.EqualTo(TutorialStep.FirstInoculation));
+            Assert.That(File.Exists(SavePath), Is.True);
+        }
+
+        [UnityTest]
         public IEnumerator TitleFlushesAndResetClearsBothPrimaryAndBackup()
         {
             yield return Reload();
@@ -184,13 +206,18 @@ namespace MyFreshMushroom.Tests
             GameObject.Find("Show Hint").GetComponent<Button>().onClick.Invoke();
             Assert.That(JsonUtility.FromJson<SessionSaveData>(File.ReadAllText(SavePath))
                 .inventory.Single(entry => entry.mushroomId == id).mushrooms, Is.EqualTo(21));
-            ClickConfirm();
+            yield return FinishTransitionTo(GameManager.TitleScene);
+            Assert.That(TitleButton("Continue").interactable, Is.True);
+            TitleButton("Continue").onClick.Invoke();
+            yield return FinishTransitionTo(GameManager.MainScene);
+            Assert.That(Session.Inventory.State.GetAmounts(id).Mushrooms, Is.EqualTo(21));
 
-            int oldScene = SceneManager.GetActiveScene().handle;
             GameObject.Find("Settings Button").GetComponent<Button>().onClick.Invoke();
+            GameObject.Find("Show Hint").GetComponent<Button>().onClick.Invoke();
+            yield return FinishTransitionTo(GameManager.TitleScene);
+            TitleButton("New Game").onClick.Invoke();
             ClickConfirm();
-            ClickConfirm();
-            yield return new WaitUntil(() => SceneManager.GetActiveScene().handle != oldScene);
+            yield return FinishTransitionTo(GameManager.MainScene);
             Assert.That(Session.Inventory.State.GetAmounts(id).Mushrooms, Is.Zero);
             Assert.That(Session.Tutorial.Step, Is.EqualTo(TutorialStep.FirstInoculation));
             File.WriteAllText(SavePath, "{ invalid");
@@ -221,13 +248,22 @@ namespace MyFreshMushroom.Tests
             Assert.That(Session.Inventory.State.GetAmounts(id).Mushrooms, Is.EqualTo(8));
         }
 
+        private static IEnumerator FinishTransitionTo(string sceneName)
+        {
+            Assert.That(SceneFade.IsRunning, Is.True);
+            yield return new WaitUntil(() => !SceneFade.IsRunning);
+            Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo(sceneName));
+        }
+
         private static IEnumerator Reload()
         {
-            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return SceneManager.LoadSceneAsync(GameManager.MainScene, LoadSceneMode.Single);
             yield return null;
         }
 
         private static void ClickConfirm() => GameObject.Find("Confirm Action").GetComponent<Button>().onClick.Invoke();
+
+        private static Button TitleButton(string name) => GameObject.Find(name).GetComponent<Button>();
 
         private static Vector2Int FindPlacement(FacilityData definition, bool flipped)
         {

@@ -13,6 +13,7 @@ namespace MyFreshMushroom
         private bool preserveBackup;
         internal bool NeedsRepair { get; private set; }
         internal bool HasNewerSave { get; private set; }
+        internal bool HasSaveFiles => File.Exists(primary) || File.Exists(backup);
 
         internal SessionSaveStore(string directory)
         {

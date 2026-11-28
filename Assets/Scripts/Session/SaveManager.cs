@@ -20,12 +20,20 @@ namespace MyFreshMushroom
         internal static string SaveDirectoryOverride { get; set; }
         internal bool IsResetting { get; private set; }
 
-        internal RestoredSession Load(Func<SessionSaveData, RestoredSession> restore)
+        private static SessionSaveStore CreateStore()
         {
             string directory = SaveDirectoryOverride ?? Application.persistentDataPath;
-            store = string.IsNullOrEmpty(directory) ? null : new SessionSaveStore(directory);
-            return store?.Load(restore);
+            return string.IsNullOrEmpty(directory) ? null : new SessionSaveStore(directory);
         }
+
+        internal static bool HasSaveFiles() => CreateStore()?.HasSaveFiles == true;
+
+        internal void PrepareStore() => store = CreateStore();
+
+        internal RestoredSession Load(Func<SessionSaveData, RestoredSession> restore) => store?.Load(restore);
+
+        internal bool WriteStartingSnapshot(Func<SessionSaveData> capture) =>
+            store == null || store.Write(capture(), reset: true);
 
         internal void TrackSession(GameManager game, ForestGridView forestView, bool loadedSave)
         {
@@ -94,7 +102,7 @@ namespace MyFreshMushroom
             bool resetSaved = false;
             try
             {
-                resetSaved = store == null || store.Write(createStartingSnapshot(), reset: true);
+                resetSaved = WriteStartingSnapshot(createStartingSnapshot);
                 return resetSaved;
             }
             finally

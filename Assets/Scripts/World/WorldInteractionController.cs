@@ -145,6 +145,7 @@ namespace MyFreshMushroom
             placementDefinition = definition;
             movingFacility = facility;
             placementFlipped = facility != null && facility.IsFlipped;
+            if (movingFacility != null) forest.SetGroundTilesVisible(true);
             PlacementChanged?.Invoke();
         }
 
@@ -167,7 +168,11 @@ namespace MyFreshMushroom
         public void CancelPlacement()
         {
             if (!IsPlacingFacility) return;
-            if (movingFacility != null) forest.SetFacilityVisible(movingFacility, true);
+            if (movingFacility != null)
+            {
+                forest.SetFacilityVisible(movingFacility, true);
+                forest.SetGroundTilesVisible(false);
+            }
             placementDefinition = null;
             movingFacility = null;
             pointerBeforePickup = null;

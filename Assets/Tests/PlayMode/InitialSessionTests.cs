@@ -19,7 +19,7 @@ namespace MyFreshMushroom.Tests
         [UnityTest]
         public IEnumerator SceneStartsWithThreeSpawnAndPanelTracksSuccessfulChanges()
         {
-            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return SceneManager.LoadSceneAsync(GameManager.MainScene, LoadSceneMode.Single);
 
             var session = Object.FindFirstObjectByType<GameManager>();
             var panel = Object.FindFirstObjectByType<InventoryPanel>();
@@ -97,7 +97,7 @@ namespace MyFreshMushroom.Tests
         [UnityTest]
         public IEnumerator ReloadingSceneCreatesFreshSessionWithoutMutatingDefinition()
         {
-            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return SceneManager.LoadSceneAsync(GameManager.MainScene, LoadSceneMode.Single);
             var first = Object.FindFirstObjectByType<GameManager>();
             var definition = first.StartingMushroom;
             string originalId = definition.Id;
@@ -105,7 +105,7 @@ namespace MyFreshMushroom.Tests
             first.Inventory.TrySpend(originalId, ResourceKind.Spawn, 3);
             first.Inventory.TryAdd(originalId, ResourceKind.Mushroom, 10);
 
-            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return SceneManager.LoadSceneAsync(GameManager.MainScene, LoadSceneMode.Single);
             var second = Object.FindFirstObjectByType<GameManager>();
             Assert.That(second.Inventory.State.GetAmounts(originalId).Mushrooms, Is.Zero);
             Assert.That(second.Inventory.State.GetAmounts(originalId).Spawn, Is.EqualTo(3));

@@ -30,18 +30,20 @@ namespace MyFreshMushroom
         [SerializeField, Range(1, 128)] private int size = 16;
         [SerializeField] private Vector2 tileSize = new Vector2(1, 0.5f);
         [SerializeField] private Sprite groundSprite;
+        [SerializeField] private Sprite groundTileOutline;
+        [SerializeField] private Color groundTileOutlineColor = new Color32(64, 64, 64, 255);
+        [SerializeField] private bool showGroundTiles;
         [SerializeField] private FacilityView facilityPrefab;
         [SerializeField] private InitialFacility[] initialFacilities;
         [SerializeField] private Vector2Int[] unavailableCells = Array.Empty<Vector2Int>();
         [SerializeField] private AreaPlacement[] areas = Array.Empty<AreaPlacement>();
         [SerializeField] private GameManager session;
         [SerializeField] private ForestCamera forestCamera;
-        [SerializeField] private Color groundColor = new Color(0.29f, 0.42f, 0.27f);
-        [SerializeField] private Color alternateGroundColor = new Color(0.32f, 0.46f, 0.30f);
 
         private readonly List<FacilityView> facilities = new List<FacilityView>();
         public IReadOnlyList<FacilityView> Facilities => facilities.AsReadOnly();
         private HashSet<Vector2Int> blockedCells;
+        private GameObject groundTiles;
         private GameObject placementPreview;
         private SpriteRenderer previewBody;
         private SpriteRenderer previewGrowth;
@@ -127,20 +129,8 @@ namespace MyFreshMushroom
             MapBounds = new Bounds(transform.TransformPoint(grid.GridToWorld(Vector2.one * centreCoordinate)), tileSize * size);
             var ground = new GameObject("Ground").transform;
             ground.SetParent(transform, false);
-            for (int x = grid.MinCellCoordinate; x < grid.MaxCellCoordinateExclusive; x++)
-            for (int y = grid.MinCellCoordinate; y < grid.MaxCellCoordinateExclusive; y++)
-            {
-                var tile = new GameObject($"Tile {x},{y}", typeof(SpriteRenderer));
-                tile.transform.SetParent(ground, false);
-                tile.transform.localPosition = grid.CellCenterToWorld(new Vector2Int(x, y));
-                var renderer = tile.GetComponent<SpriteRenderer>();
-                renderer.sprite = groundSprite;
-                renderer.color = (x + y) % 2 == 0 ? groundColor : alternateGroundColor;
-                renderer.sortingOrder = -10000;
-                tile.transform.localScale = new Vector3(tileSize.x / groundSprite.bounds.size.x,
-                    tileSize.y / groundSprite.bounds.size.y, 1) * 0.97f;
-                TileCount++;
-            }
+            TileCount = grid.Size * grid.Size;
+            if (showGroundTiles) SetGroundTilesVisible(true);
             foreach (var area in areas)
             {
                 if (area.definition == null || area.size.x <= 0 || area.size.y <= 0) continue;
@@ -167,6 +157,32 @@ namespace MyFreshMushroom
             }
             Selection = new FacilitySelection(states);
             Selection.Changed += RefreshSelection;
+        }
+
+        internal void SetGroundTilesVisible(bool visible)
+        {
+            showGroundTiles = visible;
+            if (showGroundTiles && groundTiles == null && groundTileOutline != null)
+            {
+                groundTiles = new GameObject("Ground Tiles");
+                groundTiles.transform.SetParent(transform, false);
+                Vector3 scale = new Vector3(tileSize.x / groundTileOutline.bounds.size.x,
+                    tileSize.y / groundTileOutline.bounds.size.y, 1);
+                for (int x = Grid.MinCellCoordinate; x < Grid.MaxCellCoordinateExclusive; x++)
+                for (int y = Grid.MinCellCoordinate; y < Grid.MaxCellCoordinateExclusive; y++)
+                {
+                    var tile = new GameObject($"Tile {x},{y}", typeof(SpriteRenderer));
+                    tile.transform.SetParent(groundTiles.transform, false);
+                    tile.transform.localPosition = Grid.CellCenterToWorld(new Vector2Int(x, y));
+                    tile.transform.localScale = scale;
+                    var renderer = tile.GetComponent<SpriteRenderer>();
+                    renderer.sprite = groundTileOutline;
+                    renderer.color = groundTileOutlineColor;
+                    renderer.sortingOrder = -10000;
+                }
+            }
+
+            if (groundTiles != null) groundTiles.SetActive(showGroundTiles);
         }
 
         internal bool CanPlace(FacilityData definition, Vector2Int origin, bool flipped, FacilityState moving)

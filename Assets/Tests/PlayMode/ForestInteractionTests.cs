@@ -29,13 +29,14 @@ namespace MyFreshMushroom.Tests
         [UnityTest]
         public IEnumerator FacilitiesCanBeBuiltMovedFlippedAndDemolishedThroughTheActionMenu()
         {
-            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return SceneManager.LoadSceneAsync(GameManager.MainScene, LoadSceneMode.Single);
             yield return null;
 
             var session = Object.FindFirstObjectByType<GameManager>();
             if (session.Tutorial != null) Assert.Ignore("This test exercises unrestricted facility management.");
             var forest = Object.FindFirstObjectByType<ForestGridView>();
             var input = Object.FindFirstObjectByType<WorldInteractionController>();
+            Assert.That(forest.transform.Find("Ground Tiles"), Is.Null);
             var definition = session.BuildableFacilities.Single(data => data.SupportedMushroom == session.StartingMushroom);
             var mushroomId = definition.SupportedMushroom.Id;
             var occupiedCell = forest.Facilities.Single(view => view.State.InstanceId == "starting-oyster-shelf").State.Origin;
@@ -55,6 +56,7 @@ namespace MyFreshMushroom.Tests
             buildOption.onClick.Invoke();
             Canvas.ForceUpdateCanvases();
             Assert.That(input.IsPlacingFacility, Is.True);
+            Assert.That(forest.transform.Find("Ground Tiles"), Is.Null);
             Assert.That(input.TrySelectAtScreenPosition(ScreenPoint(occupiedCell)), Is.False);
             Assert.That(session.TryBuildFacility(definition, new Vector2Int(7, 7), false, out _), Is.False);
             Assert.That(session.Inventory.State.GetAmounts(mushroomId).Mushrooms, Is.EqualTo(definition.ConstructionCost));
@@ -78,6 +80,13 @@ namespace MyFreshMushroom.Tests
                 forest.Grid.GridToWorld((Vector2)moveCell + (Vector2)facility.Footprint * 0.5f)));
             GameObject.Find("Move Facility").GetComponent<Button>().onClick.Invoke();
             var preview = forest.transform.Find("Facility Placement Preview");
+            var groundTiles = forest.transform.Find("Ground Tiles");
+            Assert.That(groundTiles, Is.Not.Null);
+            Assert.That(groundTiles.gameObject.activeSelf, Is.True);
+            Assert.That(groundTiles.childCount, Is.EqualTo(forest.TileCount));
+            var gridRenderer = groundTiles.GetChild(0).GetComponent<SpriteRenderer>();
+            Assert.That(gridRenderer.sprite.name, Is.EqualTo("GroundTile"));
+            Assert.That((Color32)gridRenderer.color, Is.EqualTo(new Color32(64, 64, 64, 255)));
             Assert.That(view.gameObject.activeSelf, Is.False);
             Assert.That(preview.gameObject.activeSelf, Is.True);
             Assert.That(preview.position, Is.EqualTo(originalPosition));
@@ -93,13 +102,17 @@ namespace MyFreshMushroom.Tests
             Assert.That(view.gameObject.activeSelf, Is.True);
             Assert.That(view.transform.position, Is.EqualTo(originalPosition));
             Assert.That(preview.gameObject.activeSelf, Is.False);
+            Assert.That(groundTiles.gameObject.activeSelf, Is.False);
 
             GameObject.Find("Move Facility").GetComponent<Button>().onClick.Invoke();
+            Assert.That(forest.transform.Find("Ground Tiles"), Is.SameAs(groundTiles));
+            Assert.That(groundTiles.gameObject.activeSelf, Is.True);
             GameObject.Find("Flip Placement").GetComponent<Button>().onClick.Invoke();
             Canvas.ForceUpdateCanvases();
             Assert.That(input.TrySelectAtScreenPosition(movePointer), Is.True);
             Assert.That(view.gameObject.activeSelf, Is.True);
             Assert.That(preview.gameObject.activeSelf, Is.False);
+            Assert.That(groundTiles.gameObject.activeSelf, Is.False);
             Assert.That(forest.Selection.Selected, Is.SameAs(facility));
             Assert.That(facility.Origin, Is.EqualTo(moveCell));
             Assert.That(facility.Footprint, Is.EqualTo(new Vector2Int(definition.Footprint.y, definition.Footprint.x)));
@@ -134,7 +147,7 @@ namespace MyFreshMushroom.Tests
         [UnityTest]
         public IEnumerator SpawnWorkbenchCanBeMovedAndStillOpensProduction()
         {
-            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return SceneManager.LoadSceneAsync(GameManager.MainScene, LoadSceneMode.Single);
             yield return null;
 
             var session = Object.FindFirstObjectByType<GameManager>();
@@ -166,7 +179,7 @@ namespace MyFreshMushroom.Tests
         [UnityTest]
         public IEnumerator CultivationProductionAndExplorationUsePrefabUiWithoutReparenting()
         {
-            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return SceneManager.LoadSceneAsync(GameManager.MainScene, LoadSceneMode.Single);
             yield return null;
             var session = Object.FindFirstObjectByType<GameManager>();
             var forest = Object.FindFirstObjectByType<ForestGridView>();
@@ -268,7 +281,7 @@ namespace MyFreshMushroom.Tests
         [UnityTest]
         public IEnumerator ProductionTabsShowSelectedRecipeAndLimitBatchesToOwnedMushrooms()
         {
-            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return SceneManager.LoadSceneAsync(GameManager.MainScene, LoadSceneMode.Single);
             yield return null;
             var session = Object.FindFirstObjectByType<GameManager>();
             if (session.Tutorial != null) Assert.Ignore("This test exercises unrestricted batch selection.");
@@ -334,7 +347,7 @@ namespace MyFreshMushroom.Tests
         [UnityTest]
         public IEnumerator ForestHasExpectedLayoutAndBothFacilitiesCanBeSelected()
         {
-            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return SceneManager.LoadSceneAsync(GameManager.MainScene, LoadSceneMode.Single);
             yield return null;
             var forest = Object.FindFirstObjectByType<ForestGridView>();
             var input = Object.FindFirstObjectByType<WorldInteractionController>();
@@ -368,10 +381,51 @@ namespace MyFreshMushroom.Tests
         }
 
         [UnityTest]
+        public IEnumerator ForestCameraCanPanToTheBackgroundEdgesWithoutShowingOutside()
+        {
+            yield return SceneManager.LoadSceneAsync(GameManager.MainScene, LoadSceneMode.Single);
+            yield return null;
+            var camera = Camera.main;
+            var forestCamera = camera.GetComponent<ForestCamera>();
+            var forest = Object.FindFirstObjectByType<ForestGridView>();
+            var background = forest.transform.Find("Center Background").GetComponent<SpriteRenderer>().bounds;
+            camera.aspect = 16f / 9f;
+            forestCamera.ShowWholeMap();
+            Assert.That(camera.transform.position.x, Is.EqualTo(forest.MapBounds.center.x).Within(0.001f));
+            Assert.That(camera.transform.position.y, Is.EqualTo(forest.MapBounds.center.y).Within(0.001f));
+
+            var drag = new Vector2(100000f, 100000f);
+            forestCamera.Pan(Vector2.zero, drag);
+            Vector3 lowerLeft = camera.ViewportToWorldPoint(Vector3.zero);
+            Assert.That(lowerLeft.x, Is.EqualTo(background.min.x).Within(0.001f));
+            Assert.That(lowerLeft.y, Is.EqualTo(background.min.y).Within(0.001f));
+
+            forestCamera.Zoom(camera.pixelRect.center, 100f);
+            forestCamera.Pan(drag, Vector2.zero);
+            Vector3 upperRight = camera.ViewportToWorldPoint(new Vector3(1f, 1f, 0f));
+            Assert.That(upperRight.x, Is.EqualTo(background.max.x).Within(0.001f));
+            Assert.That(upperRight.y, Is.EqualTo(background.max.y).Within(0.001f));
+
+            forestCamera.Zoom(camera.pixelRect.center, -100f);
+            upperRight = camera.ViewportToWorldPoint(new Vector3(1f, 1f, 0f));
+            Assert.That(upperRight.x, Is.EqualTo(background.max.x).Within(0.001f));
+            Assert.That(upperRight.y, Is.EqualTo(background.max.y).Within(0.001f));
+
+            camera.aspect = 9f / 16f;
+            yield return null;
+            lowerLeft = camera.ViewportToWorldPoint(Vector3.zero);
+            upperRight = camera.ViewportToWorldPoint(new Vector3(1f, 1f, 0f));
+            Assert.That(lowerLeft.x, Is.GreaterThanOrEqualTo(background.min.x - 0.001f));
+            Assert.That(lowerLeft.y, Is.GreaterThanOrEqualTo(background.min.y - 0.001f));
+            Assert.That(upperRight.x, Is.LessThanOrEqualTo(background.max.x + 0.001f));
+            Assert.That(upperRight.y, Is.LessThanOrEqualTo(background.max.y + 0.001f));
+        }
+
+        [UnityTest]
         public IEnumerator TutorialSelectsTheHighlightedShelfThroughAGapInItsCollider()
         {
             GameManager.TutorialEnabledOverride = true;
-            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return SceneManager.LoadSceneAsync(GameManager.MainScene, LoadSceneMode.Single);
             yield return null;
 
             var session = Object.FindFirstObjectByType<GameManager>();
@@ -413,7 +467,7 @@ namespace MyFreshMushroom.Tests
         [UnityTest]
         public IEnumerator UiOverlayBlocksWorldSelectionAtTheSamePointerPosition()
         {
-            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return SceneManager.LoadSceneAsync(GameManager.MainScene, LoadSceneMode.Single);
             yield return null;
             var forest = Object.FindFirstObjectByType<ForestGridView>();
             var input = Object.FindFirstObjectByType<WorldInteractionController>();
@@ -436,7 +490,7 @@ namespace MyFreshMushroom.Tests
         [UnityTest]
         public IEnumerator OverlappingClickRegionsSelectTheFrontmostFacilityWithAnOutlineHit()
         {
-            yield return SceneManager.LoadSceneAsync("SampleScene", LoadSceneMode.Single);
+            yield return SceneManager.LoadSceneAsync(GameManager.MainScene, LoadSceneMode.Single);
             yield return null;
             var forest = Object.FindFirstObjectByType<ForestGridView>();
             var input = Object.FindFirstObjectByType<WorldInteractionController>();

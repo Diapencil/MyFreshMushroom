@@ -13,6 +13,9 @@ namespace MyFreshMushroom
     [RequireComponent(typeof(SaveManager))]
     public sealed class GameManager : MonoBehaviour
     {
+        internal const string TitleScene = "TitleScene";
+        internal const string MainScene = "MainScene";
+
         [SerializeField] private MushroomData startingMushroom;
         [SerializeField, Min(0)] private int startingMushroomCount;
         [SerializeField, Min(0)] private int startingSpawnCount = 3;
@@ -28,6 +31,8 @@ namespace MyFreshMushroom
         [SerializeField] private MushroomData[] additionalMushrooms = System.Array.Empty<MushroomData>();
         [SerializeField] private FacilityData[] buildableFacilities = System.Array.Empty<FacilityData>();
         private bool atTitle;
+        private static bool startNewGame;
+        private static bool newGameSaveFailed;
 
         internal static bool? TutorialEnabledOverride { get; set; }
         private bool IsTutorialEnabled => TutorialEnabledOverride ?? enableTutorial;
@@ -58,6 +63,11 @@ namespace MyFreshMushroom
         private void Awake()
         {
             Initialize();
+        }
+
+        private void Start()
+        {
+            if (atTitle && newGameSaveFailed) SceneManager.LoadScene(TitleScene);
         }
 
         private void Update()
@@ -126,7 +136,8 @@ namespace MyFreshMushroom
                 }
                 definitions[definition.Id] = definition;
             }
-            var restored = Saves.Load(data => data.TryRestore(catalogue, definitions, areaStates.Values, forest,
+            Saves.PrepareStore();
+            var restored = startNewGame ? null : Saves.Load(data => data.TryRestore(catalogue, definitions, areaStates.Values, forest,
                 startingMushroom.Id, firstExplorationMushroom.Id, tutorialShelfId, IsTutorialEnabled, out var state)
                 ? state : null);
             var inventory = restored?.Inventory ?? CreateStartingInventory(mushroomIds);
@@ -168,7 +179,15 @@ namespace MyFreshMushroom
             Restoration = new ForestRestorationService(inventory, ForestAreas, Tutorial);
             Progress = progress;
             Inventory = inventory;
-            Saves.TrackSession(this, forest, restored != null);
+            bool startedNewGame = startNewGame;
+            startNewGame = false;
+            if (startedNewGame && !Saves.WriteStartingSnapshot(CaptureStartingSnapshot))
+            {
+                newGameSaveFailed = true;
+                atTitle = true;
+            }
+            else
+                Saves.TrackSession(this, forest, restored != null || startedNewGame);
             return true;
         }
 
@@ -202,12 +221,24 @@ namespace MyFreshMushroom
 
         internal bool TryReturnToTitle()
         {
-            if (!Saves.Flush()) return false;
+            if (atTitle || SceneFade.IsRunning || !Saves.Flush()) return false;
             atTitle = true;
+            SceneFade.Load(TitleScene);
             return true;
         }
 
-        internal void ResumeFromTitle() => atTitle = false;
+        internal static void StartNewGame()
+        {
+            startNewGame = true;
+            SceneFade.Load(MainScene);
+        }
+
+        internal static bool TakeNewGameSaveFailure()
+        {
+            bool failed = newGameSaveFailed;
+            newGameSaveFailed = false;
+            return failed;
+        }
 
         internal bool TryRestart()
         {
